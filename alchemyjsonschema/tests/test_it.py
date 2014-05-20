@@ -71,30 +71,47 @@ def test_properties__all__this_is_slackoff_little_bit__all_is_all(): #hmm.
                                     'pk': {'description': 'primary key', 'type': 'integer'}}
 
 
+
 ### adaptive
 def test__filtering_by__includes():
     target = _makeOne()
     result = target.create(Group, includes=["pk"])
     assert list(sorted(result["properties"].keys())) == ["pk"]
 
-
 def test__filtering_by__excludes():
     target = _makeOne()
     result = target.create(Group, excludes=["pk"])
     assert list(sorted(result["properties"].keys())) == ["color", "name"]
+
+def test__filtering_by__excludes_and_includes__conflict():
+    import pytest
+    from alchemyjsonschema import InvalidStatus
+
+    target = _makeOne()
+    with pytest.raises(InvalidStatus):
+        target.create(Group, excludes=["pk"], includes=["pk"])
+
 
 
 ### overrides
 def test__overrides__add():
     target = _makeOne()
     overrides = {"name": {"maxLength": 100}}
-    result = target.create(Group, includes=["name"])
+    result = target.create(Group, includes=["name"], overrides=overrides)
     result["properties"] == {"name": {"maxLength": 100, 'type': 'string'}}
 
 def test__overrides__pop():
     from alchemyjsonschema import pop_marker
     target = _makeOne()
     overrides = {"name": {"maxLength": pop_marker}}
-    result = target.create(Group, includes=["name"])
+    result = target.create(Group, includes=["name"], overrides=overrides)
     result["properties"] == {"name": {'type': 'string'}}
 
+def test__overrides__wrong_column():
+    import pytest
+    from alchemyjsonschema import InvalidStatus
+
+    target = _makeOne()
+    overrides = {"*missing-field*": {"maxLength": 100}}
+    with pytest.raises(InvalidStatus):
+        target.create(Group, includes=["name"], overrides=overrides)

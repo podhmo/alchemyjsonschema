@@ -4,6 +4,9 @@ from sqlalchemy.inspection import inspect
 from sqlalchemy.orm.properties import ColumnProperty
 from sqlalchemy.sql.visitors import VisitableType
 
+class InvalidStatus(Exception):
+    pass
+
 """
 http://json-schema.org/latest/json-schema-core.html#anchor8
 3.5.  JSON Schema primitive types
@@ -74,7 +77,7 @@ class Classifier(object):
         for type_ in self.mapping:
             if issubclass(cls, type_): #xxx:
                 return type_, self.mapping[type_]
-        raise Exception("notfound")
+        raise InvalidStatus("notfound")
 
 DefaultClassfier = Classifier(default_mapping)
 
@@ -84,8 +87,8 @@ class BaseModelWalker(object):
         self.includes = includes
         self.excludes = excludes
         if includes and excludes:
-            if set(includes).intersect(excludes):
-                raise ValueError("Conflict includes={}, exclude={}".format(includes, excludes))
+            if set(includes).intersection(excludes):
+                raise InvalidStatus("Conflict includes={}, exclude={}".format(includes, excludes))
 
 class SingleModelWalker(BaseModelWalker):
     def walk(self):
@@ -105,6 +108,24 @@ class OneModelOnlyWalker(BaseModelWalker):
                             yield prop
 
 
+pop_marker = object()
+
+class CollectionForOverrides(object):
+    def __init__(self, params, pop_marker=pop_marker):
+        self.params = params or {}
+        self.not_used_key = set(params.keys())
+        self.pop_marker = pop_marker
+
+    def __contains__(self, k):
+        return k in self.params
+
+    def overrides(self, basedict):
+        for k, v in self.params.items():
+            if v == self.pop_marker:
+                basedict.pop(k) #xxx: KeyError?
+            else:
+                basedict[k] = v
+            self.not_used_key.remove(k) #xxx: KeyError?
 
 class SchemaFactory(object):
     def __init__(self, walker, classifier=DefaultClassfier, restriction_dict=default_restriction_dict):
@@ -114,13 +135,17 @@ class SchemaFactory(object):
 
     def create(self, model, includes=None, excludes=None, overrides=None):
         walker = self.walker(model, includes=includes, excludes=excludes)
-        overrides = overrides or {}
+        overrides = CollectionForOverrides(overrides or {})
 
         schema = {
             "title": model.__name__, 
             "type": "object", 
             "properties": self._build_properties(walker, overrides=overrides)
         }
+
+        if overrides.not_used_key:
+            raise InvalidStatus("invalid overrides: {}".format(overrides.not_used_key))
+
         if model.__doc__:
             schema["description"] = model.__doc__
 
@@ -146,7 +171,7 @@ class SchemaFactory(object):
                         sub["description"] = c.doc
 
                     if c.name in overrides:
-                        sub.update(overrides[c.name])
+                        overrides.overrides(sub)
 
                     D[c.name] = sub
                 else:
@@ -157,11 +182,3 @@ class SchemaFactory(object):
     def _detect_required(self, walker):
         return [prop.key for prop in walker.walk() if any(not c.nullable for c in prop.columns)]
 
-pop_marker = object()
-
-def dict_update_within_pop(d1, d2, pop_marker=pop_marker):
-    for k, v in d2.items():
-        if v == pop_marker:
-            d1.pop(k, None) #xxx:
-        else:
-            d1[k] = v
