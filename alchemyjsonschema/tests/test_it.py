@@ -70,3 +70,15 @@ def test_properties__all__this_is_slackoff_little_bit__all_is_all(): #hmm.
                                     'name': {'maxLength': 255, 'type': 'string'},
                                     'pk': {'description': 'primary key', 'type': 'integer'}}
 
+
+### adaptive
+def test__filtering_by__includes():
+    target = _makeOne()
+    result = target.create(Group, includes=["pk"])
+    assert list(sorted(result["properties"].keys())) == ["pk"]
+
+
+def test__filtering_by__excludes():
+    target = _makeOne()
+    result = target.create(Group, excludes=["pk"])
+    assert list(sorted(result["properties"].keys())) == ["color", "name"]

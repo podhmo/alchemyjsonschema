@@ -79,13 +79,20 @@ class Classifier(object):
 DefaultClassfier = Classifier(default_mapping)
 
 class SingleModelWalker(object):
-    def __init__(self, model):
+    def __init__(self, model, includes=None, excludes=None):
         self.mapper = inspect(model).mapper
+        self.includes = includes
+        self.excludes = excludes
+        if includes and excludes:
+            if set(includes).intersect(excludes):
+                raise ValueError("Conflict includes={}, exclude={}".format(includes, excludes))
 
     def walk(self):
         for prop in self.mapper.attrs:
             if isinstance(prop, ColumnProperty):
-                yield prop
+                if self.includes is None or prop.key in self.includes:
+                    if self.excludes is None or not prop.key in self.excludes:
+                        yield prop
 
 class SchemaFactory(object):
     def __init__(self, walker, classifier=DefaultClassfier, restriction_dict=default_restriction_dict):
@@ -93,8 +100,8 @@ class SchemaFactory(object):
         self.walker = walker #class
         self.restriction_dict = restriction_dict
 
-    def create(self, model):
-        walker = self.walker(model)
+    def create(self, model, includes=None, excludes=None):
+        walker = self.walker(model, includes=includes, excludes=excludes)
 
         schema = {
             "title": model.__name__, 
@@ -105,6 +112,7 @@ class SchemaFactory(object):
             schema["description"] = model.__doc__
 
         required = self._detect_required(walker)
+
         if required:
             schema["required"] = required
         return schema
