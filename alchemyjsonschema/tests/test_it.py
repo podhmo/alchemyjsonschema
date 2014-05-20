@@ -82,3 +82,19 @@ def test__filtering_by__excludes():
     target = _makeOne()
     result = target.create(Group, excludes=["pk"])
     assert list(sorted(result["properties"].keys())) == ["color", "name"]
+
+
+### overrides
+def test__overrides__add():
+    target = _makeOne()
+    overrides = {"name": {"maxLength": 100}}
+    result = target.create(Group, includes=["name"])
+    result["properties"] == {"name": {"maxLength": 100, 'type': 'string'}}
+
+def test__overrides__pop():
+    from alchemyjsonschema import pop_marker
+    target = _makeOne()
+    overrides = {"name": {"maxLength": pop_marker}}
+    result = target.create(Group, includes=["name"])
+    result["properties"] == {"name": {'type': 'string'}}
+

@@ -112,13 +112,14 @@ class SchemaFactory(object):
         self.walker = walker #class
         self.restriction_dict = restriction_dict
 
-    def create(self, model, includes=None, excludes=None):
+    def create(self, model, includes=None, excludes=None, overrides=None):
         walker = self.walker(model, includes=includes, excludes=excludes)
+        overrides = overrides or {}
 
         schema = {
             "title": model.__name__, 
             "type": "object", 
-            "properties": self._build_properties(walker)
+            "properties": self._build_properties(walker, overrides=overrides)
         }
         if model.__doc__:
             schema["description"] = model.__doc__
@@ -129,7 +130,7 @@ class SchemaFactory(object):
             schema["required"] = required
         return schema
 
-    def _build_properties(self, walker):
+    def _build_properties(self, walker, overrides):
         D = {}
         for prop in walker.walk():
             for c in prop.columns:
@@ -143,6 +144,10 @@ class SchemaFactory(object):
 
                     if c.doc:
                         sub["description"] = c.doc
+
+                    if c.name in overrides:
+                        sub.update(overrides[c.name])
+
                     D[c.name] = sub
                 else:
                     raise NotImplemented
@@ -151,3 +156,12 @@ class SchemaFactory(object):
 
     def _detect_required(self, walker):
         return [prop.key for prop in walker.walk() if any(not c.nullable for c in prop.columns)]
+
+pop_marker = object()
+
+def dict_update_within_pop(d1, d2, pop_marker=pop_marker):
+    for k, v in d2.items():
+        if v == pop_marker:
+            d1.pop(k, None) #xxx:
+        else:
+            d1[k] = v
