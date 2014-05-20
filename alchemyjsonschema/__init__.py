@@ -113,7 +113,7 @@ pop_marker = object()
 class CollectionForOverrides(object):
     def __init__(self, params, pop_marker=pop_marker):
         self.params = params or {}
-        self.not_used_key = set(params.keys())
+        self.not_used_keys = set(params.keys())
         self.pop_marker = pop_marker
 
     def __contains__(self, k):
@@ -125,7 +125,7 @@ class CollectionForOverrides(object):
                 basedict.pop(k) #xxx: KeyError?
             else:
                 basedict[k] = v
-            self.not_used_key.remove(k) #xxx: KeyError?
+            self.not_used_keys.remove(k) #xxx: KeyError?
 
 class SchemaFactory(object):
     def __init__(self, walker, classifier=DefaultClassfier, restriction_dict=default_restriction_dict):
@@ -143,8 +143,8 @@ class SchemaFactory(object):
             "properties": self._build_properties(walker, overrides=overrides)
         }
 
-        if overrides.not_used_key:
-            raise InvalidStatus("invalid overrides: {}".format(overrides.not_used_key))
+        if overrides.not_used_keys:
+            raise InvalidStatus("invalid overrides: {}".format(overrides.not_used_keys))
 
         if model.__doc__:
             schema["description"] = model.__doc__
