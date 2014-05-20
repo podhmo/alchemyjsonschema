@@ -78,7 +78,7 @@ class Classifier(object):
 
 DefaultClassfier = Classifier(default_mapping)
 
-class SingleModelWalker(object):
+class BaseModelWalker(object):
     def __init__(self, model, includes=None, excludes=None):
         self.mapper = inspect(model).mapper
         self.includes = includes
@@ -87,12 +87,24 @@ class SingleModelWalker(object):
             if set(includes).intersect(excludes):
                 raise ValueError("Conflict includes={}, exclude={}".format(includes, excludes))
 
+class SingleModelWalker(BaseModelWalker):
     def walk(self):
         for prop in self.mapper.attrs:
             if isinstance(prop, ColumnProperty):
                 if self.includes is None or prop.key in self.includes:
                     if self.excludes is None or not prop.key in self.excludes:
                         yield prop
+
+class OneModelOnlyWalker(BaseModelWalker):
+    def walk(self):
+        for prop in self.mapper.attrs:
+            if isinstance(prop, ColumnProperty):
+                if self.includes is None or prop.key in self.includes:
+                    if self.excludes is None or not prop.key in self.excludes:
+                        if not any(c.foreign_keys for c in prop.columns):
+                            yield prop
+
+
 
 class SchemaFactory(object):
     def __init__(self, walker, classifier=DefaultClassfier, restriction_dict=default_restriction_dict):
