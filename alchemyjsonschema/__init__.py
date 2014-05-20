@@ -1,6 +1,9 @@
 # -*- coding:utf-8 -*-
 import sqlalchemy.types as t
-import jsonschema
+from sqlalchemy.inspection import inspect
+from sqlalchemy.orm.properties import ColumnProperty
+from sqlalchemy.sql.visitors import VisitableType
+
 """
 http://json-schema.org/latest/json-schema-core.html#anchor8
 3.5.  JSON Schema primitive types
@@ -21,53 +24,10 @@ JSON Schema defines seven primitive types for JSON values:
         A JSON object. 
     string
         A JSON string. 
-
-// sample
-{
-	"title": "Example Schema",
-	"type": "object",
-	"properties": {
-		"firstName": {
-			"type": "string"
-		},
-		"lastName": {
-			"type": "string"
-		},
-		"age": {
-			"description": "Age in years",
-			"type": "integer",
-			"minimum": 0
-		}
-	},
-	"required": ["firstName", "lastName"]
-}
 """
 
 ## tentative
-default_classfier = {
-    t.INTEGER: "integer",
-    t.INT: "integer", 
-    t.CHAR: "string", 
-    t.VARCHAR: "string", 
-    t.NVARCHAR: "string", 
-    t.TEXT: "string", 
-    t.BLOB: "xxx", 
-    t.CLOB: "xxx", 
-    t.BINARY: "xxx", 
-    t.VARBINARY: "xxx", 
-    t.BOOLEAN: "boolean", 
-    t.BIGINT: "integer", 
-    t.SMALLINT: "integer", 
-    t.INTEGER: "integer", 
-    t.DATE: "date", 
-    t.FLOAT: "number",
-    t.NUMERIC: "integer", #xxx:
-    t.REAL: "number", 
-    t.DECIMAL: "integer", 
-    t.TIMESTAMP: "xxx", 
-    t.DATETIME: "date-time", 
-    t.DATE: "date", 
-    t.TIME: "time",
+default_mapping = {
     t.String: "string", 
     t.Text: "string", 
     t.Integer: "integer", 
@@ -85,32 +45,38 @@ default_classfier = {
     t.Concatenable:"xxx", 
     t.UnicodeText:"string", 
     t.Interval:"xxx", 
-    t.Enum:"xxx", 
+    t.Enum:"string", 
 }
 
-import sqlalchemy as sa
-import sqlalchemy.orm as orm
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.ext.declarative import declared_attr
-from sqlalchemy.orm import scoped_session, sessionmaker
 
-Session = scoped_session(sessionmaker())
-engine = sa.create_engine('sqlite://')
-Session.configure(bind=engine)
+## restriction
+def string_max_length(column, sub):
+    sub["maxLength"] = column.type.length
 
-Base = declarative_base(bind=engine)
+def enum_one_of(column, sub):
+    sub["oneOf"] = column.type.enums
 
-class User(Base):
-    __tablename__ = "User"
-    query = Session.query_property()
+default_restriction_dict = {
+    t.String: string_max_length, 
+    t.Enum: enum_one_of
+}
 
-    pk = sa.Column(sa.Integer, primary_key=True, doc="primary key")
-    name = sa.Column(sa.String(255), default="", nullable=False)
-    value = sa.Column(sa.String(255), default="", nullable=False)
+class Classifier(object):
+    def __init__(self, mapping=default_mapping):
+        self.mapping = mapping
 
-from sqlalchemy.inspection import inspect
-from sqlalchemy.orm.properties import ColumnProperty
-from sqlalchemy.sql.visitors import VisitableType
+    def __getitem__(self, k):
+        cls = k.__class__
+        v = self.mapping.get(cls)
+        if v is not None:
+            return cls, v
+        ## inheritance
+        for type_ in self.mapping:
+            if issubclass(cls, type_): #xxx:
+                return type_, self.mapping[type_]
+        raise Exception("notfound")
+
+DefaultClassfier = Classifier(default_mapping)
 
 class SingleModelWalker(object):
     def __init__(self, model):
@@ -122,9 +88,10 @@ class SingleModelWalker(object):
                 yield prop
 
 class SchemaFactory(object):
-    def __init__(self, walker, classifier=default_classfier):
+    def __init__(self, walker, classifier=DefaultClassfier, restriction_dict=default_restriction_dict):
         self.classifier = classifier
         self.walker = walker #class
+        self.restriction_dict = restriction_dict
 
     def create(self, model):
         walker = self.walker(model)
@@ -134,6 +101,9 @@ class SchemaFactory(object):
             "type": "object", 
             "properties": self._build_properties(walker)
         }
+        if model.__doc__:
+            schema["description"] = model.__doc__
+
         required = self._detect_required(walker)
         if required:
             schema["required"] = required
@@ -142,29 +112,22 @@ class SchemaFactory(object):
     def _build_properties(self, walker):
         D = {}
         for prop in walker.walk():
-            sub = {}
-            types_list = tuple((c.type.__class__ if type(c.type) != VisitableType else c.type)
-                               for c in prop.columns)
-            types = [self.classifier[t] for t in types_list]
-            assert len(types) == 1 #xxx:
-            sub["type"] = types[0]
-            if prop.doc:
-                sub["description"] = prop.doc
+            for c in prop.columns:
+                sub = {}
+                if type(c.type) != VisitableType:
+                    itype, sub["type"] = self.classifier[c.type]
+                    for tcls in itype.__mro__:
+                        fn = self.restriction_dict.get(tcls)
+                        if fn is not None:
+                            fn(c, sub)
+
+                    if c.doc:
+                        sub["description"] = c.doc
+                    D[c.name] = sub
+                else:
+                    raise NotImplemented
             D[prop.key] = sub
         return D
 
     def _detect_required(self, walker):
         return [prop.key for prop in walker.walk() if any(not c.nullable for c in prop.columns)]
-
-factory = SchemaFactory(SingleModelWalker, default_classfier)
-import json
-pp = lambda d : json.dumps(d, indent=2, ensure_ascii=False)
-print(pp(factory.create(User)))
-
-schema = factory.create(User)
-
-from jsonschema import validate
-print(validate({"pk": 1, "name": "foo", "value": "bar"}, schema))
-Base.metadata.create_all()
-
-
