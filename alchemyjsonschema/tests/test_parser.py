@@ -57,3 +57,11 @@ def test_multiple2__convert_to_dict_list__order_also_same():
     assert result == [{"name": "foo", "country": "jp"},
                       {"name": "bar", "country": "us"},
                       {"name": "boo", "country": "ch"}]
+
+
+def test_php_compatible_mdict_return_list():
+    from webob.multidict import MultiDict
+
+    mdict = MultiDict([("name", "foo"), ("g_id[]", "1"), ("g_id[]", "2")])
+    result = _callFUT(mdict)
+    assert result == {"name": "foo", "g_id": ["1", "2"]}
