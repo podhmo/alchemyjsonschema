@@ -6,6 +6,7 @@ from sqlalchemy.orm.relationships import RelationshipProperty
 from sqlalchemy.sql.visitors import VisitableType
 from sqlalchemy.orm.base import ONETOMANY
 
+
 class InvalidStatus(Exception):
     pass
 
