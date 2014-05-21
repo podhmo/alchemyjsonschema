@@ -4,7 +4,7 @@ from sqlalchemy.inspection import inspect
 from sqlalchemy.orm.properties import ColumnProperty
 from sqlalchemy.orm.relationships import RelationshipProperty
 from sqlalchemy.sql.visitors import VisitableType
-
+from sqlalchemy.orm.base import ONETOMANY
 
 class InvalidStatus(Exception):
     pass
@@ -185,7 +185,11 @@ class SchemaFactory(object):
             if hasattr(prop, "mapper"):     # RelationshipProperty
                 subwalker = walker.__class__(prop.mapper, excludes=[prop.back_populates, prop.backref])
                 suboverrides = overrides.get_child(prop.key)
-                D[prop.key] = self._build_properties(subwalker, suboverrides, depth=(depth and depth - 1))
+                subschema = self._build_properties(subwalker, suboverrides, depth=(depth and depth - 1))
+                if prop.direction == ONETOMANY:
+                    D[prop.key] = {"type": "array", "items": subschema}
+                else:
+                    D[prop.key] = subschema
             elif hasattr(prop, "columns"):  # ColumnProperty
                 for c in prop.columns:
                     sub = {}

@@ -79,8 +79,9 @@ def test_properties__include_ManytoOne_backref():
 
     assert "required" in result
     assert list(sorted(result["properties"])) == ["name", "pk", "users"]
-    assert result["properties"]["users"] == {'name': {'maxLength': 255, 'type': 'string'},
-                                             'pk': {'description': 'primary key', 'type': 'integer'}}
+    assert result["properties"]["users"] == {"type": "array",
+                                             "items": {'name': {'maxLength': 255, 'type': 'string'},
+                                                       'pk': {'description': 'primary key', 'type': 'integer'}}}
 
 
 # depth
@@ -138,7 +139,7 @@ def test_properties__default_depth_is__traverse_all_chlidren():
     assert "required" in result
     assert list(sorted(result["properties"])) == ["children", "pk"]
     assert (result["properties"]
-            ["children"]["children"]["children"]["children"]["children"]
+            ["children"]["items"]["children"]["items"]["children"]["items"]["children"]["items"]["children"]["items"]
             ["pk"]["description"] == "primary key5")
 
 
@@ -150,7 +151,7 @@ def test_properties__default_depth_is__2__traverse_depth2():
     assert "required" in result
     assert list(sorted(result["properties"])) == ["children", "pk"]
     assert (result["properties"]
-            ["children"]
+            ["children"]["items"]
             ["pk"]["description"] == "primary key1")
 
 
@@ -162,5 +163,5 @@ def test_properties__default_depth_is__3__traverse_depth3():
     assert "required" in result
     assert list(sorted(result["properties"])) == ["children", "pk"]
     assert (result["properties"]
-            ["children"]["children"]
+            ["children"]["items"]["children"]["items"]
             ["pk"]["description"] == "primary key2")
