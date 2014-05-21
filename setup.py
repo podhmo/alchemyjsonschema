@@ -15,13 +15,16 @@ except IOError:
 
 install_requires=[
     'setuptools',
+    'sqlalchemy',
+    'jsonschema'
     ]
 
 docs_extras = [
     ]
 
 tests_require =[
-    "pytest"
+    "pytest", 
+    "webob"
 ]
 testing_extras = tests_require + [
     ]
