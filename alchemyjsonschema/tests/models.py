@@ -8,6 +8,7 @@ Session = scoped_session(sessionmaker())
 
 Base = declarative_base()
 
+
 class Group(Base):
     __tablename__ = "Group"
     query = Session.query_property()
@@ -15,6 +16,7 @@ class Group(Base):
     pk = sa.Column(sa.Integer, primary_key=True, doc="primary key")
     name = sa.Column(sa.String(255), default="", nullable=False)
     color = sa.Column(sa.Enum("red", "green", "yellow", "blue"))
+
 
 class User(Base):
     __tablename__ = "User"

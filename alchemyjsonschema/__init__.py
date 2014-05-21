@@ -4,6 +4,7 @@ from sqlalchemy.inspection import inspect
 from sqlalchemy.orm.properties import ColumnProperty
 from sqlalchemy.sql.visitors import VisitableType
 
+
 class InvalidStatus(Exception):
     pass
 
@@ -14,55 +15,57 @@ http://json-schema.org/latest/json-schema-core.html#anchor8
 JSON Schema defines seven primitive types for JSON values:
 
     array
-        A JSON array. 
+        A JSON array.
     boolean
-        A JSON boolean. 
+        A JSON boolean.
     integer
-        A JSON number without a fraction or exponent part. 
+        A JSON number without a fraction or exponent part.
     number
-        Any JSON number. Number includes integer. 
+        Any JSON number. Number includes integer.
     null
-        The JSON null value. 
+        The JSON null value.
     object
-        A JSON object. 
+        A JSON object.
     string
-        A JSON string. 
+        A JSON string.
 """
 
-## tentative
+#  tentative
 default_mapping = {
-    t.String: "string", 
-    t.Text: "string", 
-    t.Integer: "integer", 
-    t.SmallInteger: "integer", 
-    t.BigInteger: "integer", 
-    t.Numeric: "integer", 
-    t.Float: "number", 
-    t.DateTime: "date-time", 
-    t.Date: "date", 
+    t.String: "string",
+    t.Text: "string",
+    t.Integer: "integer",
+    t.SmallInteger: "integer",
+    t.BigInteger: "integer",
+    t.Numeric: "integer",
+    t.Float: "number",
+    t.DateTime: "date-time",
+    t.Date: "date",
     t.Time: "time",
-    t.LargeBinary:"xxx", 
-    t.Binary:"xxx", 
-    t.Boolean:"boolean", 
-    t.Unicode:"string", 
-    t.Concatenable:"xxx", 
-    t.UnicodeText:"string", 
-    t.Interval:"xxx", 
-    t.Enum:"string", 
+    t.LargeBinary: "xxx",
+    t.Binary: "xxx",
+    t.Boolean: "boolean",
+    t.Unicode: "string",
+    t.Concatenable: "xxx",
+    t.UnicodeText: "string",
+    t.Interval: "xxx",
+    t.Enum: "string",
 }
 
 
-## restriction
+# restriction
 def string_max_length(column, sub):
     sub["maxLength"] = column.type.length
+
 
 def enum_one_of(column, sub):
     sub["oneOf"] = column.type.enums
 
 default_restriction_dict = {
-    t.String: string_max_length, 
+    t.String: string_max_length,
     t.Enum: enum_one_of
 }
+
 
 class Classifier(object):
     def __init__(self, mapping=default_mapping):
@@ -73,13 +76,14 @@ class Classifier(object):
         v = self.mapping.get(cls)
         if v is not None:
             return cls, v
-        ## inheritance
+        # inheritance
         for type_ in self.mapping:
-            if issubclass(cls, type_): #xxx:
+            if issubclass(cls, type_):
                 return type_, self.mapping[type_]
         raise InvalidStatus("notfound")
 
 DefaultClassfier = Classifier(default_mapping)
+
 
 class BaseModelWalker(object):
     def __init__(self, model, includes=None, excludes=None):
@@ -90,25 +94,28 @@ class BaseModelWalker(object):
             if set(includes).intersection(excludes):
                 raise InvalidStatus("Conflict includes={}, exclude={}".format(includes, excludes))
 
+
 class SingleModelWalker(BaseModelWalker):
     def walk(self):
         for prop in self.mapper.attrs:
             if isinstance(prop, ColumnProperty):
                 if self.includes is None or prop.key in self.includes:
-                    if self.excludes is None or not prop.key in self.excludes:
+                    if self.excludes is None or prop.key not in self.excludes:
                         yield prop
+
 
 class OneModelOnlyWalker(BaseModelWalker):
     def walk(self):
         for prop in self.mapper.attrs:
             if isinstance(prop, ColumnProperty):
                 if self.includes is None or prop.key in self.includes:
-                    if self.excludes is None or not prop.key in self.excludes:
+                    if self.excludes is None or prop.key not in self.excludes:
                         if not any(c.foreign_keys for c in prop.columns):
                             yield prop
 
 
 pop_marker = object()
+
 
 class CollectionForOverrides(object):
     def __init__(self, params, pop_marker=pop_marker):
@@ -122,15 +129,16 @@ class CollectionForOverrides(object):
     def overrides(self, basedict):
         for k, v in self.params.items():
             if v == self.pop_marker:
-                basedict.pop(k) #xxx: KeyError?
+                basedict.pop(k)  # xxx: KeyError?
             else:
                 basedict[k] = v
-            self.not_used_keys.remove(k) #xxx: KeyError?
+            self.not_used_keys.remove(k)  # xxx: KeyError?
+
 
 class SchemaFactory(object):
     def __init__(self, walker, classifier=DefaultClassfier, restriction_dict=default_restriction_dict):
         self.classifier = classifier
-        self.walker = walker #class
+        self.walker = walker  # class
         self.restriction_dict = restriction_dict
 
     def create(self, model, includes=None, excludes=None, overrides=None):
@@ -138,8 +146,8 @@ class SchemaFactory(object):
         overrides = CollectionForOverrides(overrides or {})
 
         schema = {
-            "title": model.__name__, 
-            "type": "object", 
+            "title": model.__name__,
+            "type": "object",
             "properties": self._build_properties(walker, overrides=overrides)
         }
 
@@ -181,4 +189,3 @@ class SchemaFactory(object):
 
     def _detect_required(self, walker):
         return [prop.key for prop in walker.walk() if any(not c.nullable for c in prop.columns)]
-
