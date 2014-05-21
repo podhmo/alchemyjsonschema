@@ -2,6 +2,7 @@
 import sqlalchemy.types as t
 from sqlalchemy.inspection import inspect
 from sqlalchemy.orm.properties import ColumnProperty
+from sqlalchemy.orm.relationships import RelationshipProperty
 from sqlalchemy.sql.visitors import VisitableType
 
 
@@ -83,7 +84,7 @@ class Classifier(object):
         raise InvalidStatus("notfound")
 
 DefaultClassfier = Classifier(default_mapping)
-
+Empty = ()
 
 class BaseModelWalker(object):
     def __init__(self, model, includes=None, excludes=None):
@@ -110,9 +111,18 @@ class OneModelOnlyWalker(BaseModelWalker):
             if isinstance(prop, ColumnProperty):
                 if self.includes is None or prop.key in self.includes:
                     if self.excludes is None or prop.key not in self.excludes:
-                        if not any(c.foreign_keys for c in prop.columns):
+                        if not any(c.foreign_keys for c in getattr(prop, "columns", Empty)):
                             yield prop
 
+
+class AlsoChildrenWalker(BaseModelWalker):
+    def walk(self):
+        for prop in self.mapper.attrs:
+            if isinstance(prop, (ColumnProperty, RelationshipProperty)):
+                if self.includes is None or prop.key in self.includes:
+                    if self.excludes is None or prop.key not in self.excludes:
+                        if not any(c.foreign_keys for c in getattr(prop, "columns", Empty)):
+                            yield prop
 
 pop_marker = object()
 
@@ -125,6 +135,9 @@ class CollectionForOverrides(object):
 
     def __contains__(self, k):
         return k in self.params
+
+    def get_child(self, k):
+        return self.__class__(self.params.get(k, {}), pop_marker=self.pop_marker)
 
     def overrides(self, basedict):
         for k, v in self.params.items():
@@ -141,14 +154,14 @@ class SchemaFactory(object):
         self.walker = walker  # class
         self.restriction_dict = restriction_dict
 
-    def create(self, model, includes=None, excludes=None, overrides=None):
+    def create(self, model, includes=None, excludes=None, overrides=None, depth=None):
         walker = self.walker(model, includes=includes, excludes=excludes)
         overrides = CollectionForOverrides(overrides or {})
 
         schema = {
             "title": model.__name__,
             "type": "object",
-            "properties": self._build_properties(walker, overrides=overrides)
+            "properties": self._build_properties(walker, overrides=overrides, depth=depth)
         }
 
         if overrides.not_used_keys:
@@ -163,29 +176,37 @@ class SchemaFactory(object):
             schema["required"] = required
         return schema
 
-    def _build_properties(self, walker, overrides):
+    def _build_properties(self, walker, overrides, depth=None):
+        if depth is not None and depth <= 0:
+            return {}
+
         D = {}
         for prop in walker.walk():
-            for c in prop.columns:
-                sub = {}
-                if type(c.type) != VisitableType:
-                    itype, sub["type"] = self.classifier[c.type]
-                    for tcls in itype.__mro__:
-                        fn = self.restriction_dict.get(tcls)
-                        if fn is not None:
-                            fn(c, sub)
+            if hasattr(prop, "mapper"):     # RelationshipProperty
+                subwalker = walker.__class__(prop.mapper, excludes=[prop.back_populates, prop.backref])
+                suboverrides = overrides.get_child(prop.key)
+                D[prop.key] = self._build_properties(subwalker, suboverrides, depth=(depth and depth - 1))
+            elif hasattr(prop, "columns"):  # ColumnProperty
+                for c in prop.columns:
+                    sub = {}
+                    if type(c.type) != VisitableType:
+                        itype, sub["type"] = self.classifier[c.type]
+                        for tcls in itype.__mro__:
+                            fn = self.restriction_dict.get(tcls)
+                            if fn is not None:
+                                fn(c, sub)
 
-                    if c.doc:
-                        sub["description"] = c.doc
+                        if c.doc:
+                            sub["description"] = c.doc
 
-                    if c.name in overrides:
-                        overrides.overrides(sub)
+                        if c.name in overrides:
+                            overrides.overrides(sub)
 
-                    D[c.name] = sub
-                else:
-                    raise NotImplemented
-            D[prop.key] = sub
+                        D[c.name] = sub
+                    else:
+                        raise NotImplemented
+                D[prop.key] = sub
         return D
 
     def _detect_required(self, walker):
-        return [prop.key for prop in walker.walk() if any(not c.nullable for c in prop.columns)]
+        return [prop.key for prop in walker.walk() if any(not c.nullable for c in getattr(prop, "columns", Empty))]
