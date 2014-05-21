@@ -6,7 +6,7 @@ def _getTarget():
 
 def _makeOne(*args, **kwargs):
     from alchemyjsonschema import (
-        SingleModelWalker, 
+        SingleModelWalker,
         DefaultClassfier
     )
     return _getTarget()(SingleModelWalker, DefaultClassfier)
@@ -14,6 +14,7 @@ def _makeOne(*args, **kwargs):
 
 # definition
 import sqlalchemy as sa
+import sqlalchemy.orm as orm
 from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
@@ -26,6 +27,36 @@ class Group(Base):
     pk = sa.Column(sa.Integer, primary_key=True, doc="primary key")
     name = sa.Column(sa.String(255), default="", nullable=False)
     color = sa.Column(sa.Enum("red", "green", "yellow", "blue"))
+
+
+class User(Base):
+    __tablename__ = "User"
+
+    pk = sa.Column(sa.Integer, primary_key=True, doc="primary key")
+    name = sa.Column(sa.String(255), default="", nullable=True)
+    group_id = sa.Column(sa.Integer, sa.ForeignKey(Group.pk), nullable=False)
+    group = orm.relationship(Group, uselist=False, backref="users")
+
+
+def test_it():
+    from jsonschema import validate
+    target = _makeOne()
+    schema = target.create(Group, excludes=["pk"])
+    data = {"name": "ravenclaw", "color": "blue", "users": [{"pk": 1, "name": "foo"}, {"pk": 2, "name": "bar"}]}
+
+    validate(data, schema)
+
+
+def test_it2():
+    import pytest
+    from jsonschema import validate
+    from jsonschema.exceptions import ValidationError
+    target = _makeOne()
+    schema = target.create(Group, excludes=["pk"])
+    data = {"name": "blackmage", "color": "black", "users": [{"pk": 1, "name": "foo"}, {"pk": 2, "name": "bar"}]}
+
+    with pytest.raises(ValidationError):
+        validate(data, schema)
 
 
 def test_type__is_object():
@@ -73,7 +104,7 @@ def test_properties__all__this_is_slackoff_little_bit__all_is_all():   # hmm.
     result = target.create(Group)
 
     assert result["properties"] == {'color': {'maxLength': 6,
-                                              'oneOf': ('red', 'green', 'yellow', 'blue'),
+                                              'enum': ['red', 'green', 'yellow', 'blue'],
                                               'type': 'string'},
                                     'name': {'maxLength': 255, 'type': 'string'},
                                     'pk': {'description': 'primary key', 'type': 'integer'}}
