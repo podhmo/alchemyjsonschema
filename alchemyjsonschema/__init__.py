@@ -60,7 +60,7 @@ def string_max_length(column, sub):
 
 
 def enum_one_of(column, sub):
-    sub["oneOf"] = column.type.enums
+    sub["enum"] = list(column.type.enums)
 
 default_restriction_dict = {
     t.String: string_max_length,
@@ -85,6 +85,7 @@ class Classifier(object):
 
 DefaultClassfier = Classifier(default_mapping)
 Empty = ()
+
 
 class BaseModelWalker(object):
     def __init__(self, model, includes=None, excludes=None):
