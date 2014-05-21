@@ -6,10 +6,27 @@ def _callFUT(*args, **kwargs):
     return from_multidict(*args, **kwargs)
 
 
-def test_single():
+def test_dict__return_onesself():
+    mdict = {"name": "foo", "country": "jp"}
+    result = _callFUT(mdict)
+
+    assert result == {"name": "foo", "country": "jp"}
+
+
+def test_single_mdict__return_dict():
     from webob.multidict import MultiDict
 
     mdict = MultiDict({"name": "foo", "country": "jp"})
+    result = _callFUT(mdict)
+
+    assert result == {"name": "foo", "country": "jp"}
+
+
+def test_django_like_mdict__return_dict():
+    from webob.multidict import MultiDict
+    from alchemyjsonschema.parser import DjangoMultiDictWrapper
+
+    mdict = DjangoMultiDictWrapper(MultiDict({"name": "foo", "country": "jp"}))
     result = _callFUT(mdict)
 
     assert result == {"name": "foo", "country": "jp"}
