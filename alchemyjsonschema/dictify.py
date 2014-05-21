@@ -1,47 +1,67 @@
 # -*- coding:utf-8 -*-
 import logging
 logger = logging.getLogger(__name__)
-
-from alchemyjsonschema.tests.models import Group, User
-from alchemyjsonschema import SchemaFactory, AlsoChildrenWalker
-
-factory = SchemaFactory(AlsoChildrenWalker)
-group_schema = factory.create(Group)
-import pprint
-pprint.pprint(group_schema)
-"""
-{'properties': {'color': {'enum': ['red', 'green', 'yellow', 'blue'],
-                          'maxLength': 6,
-                          'type': 'string'},
-                'name': {'maxLength': 255, 'type': 'string'},
-                'pk': {'description': 'primary key', 'type': 'integer'},
-                'users': {'items': {'name': {'maxLength': 255,
-                                             'type': 'string'},
-                                    'pk': {'description': 'primary key',
-                                           'type': 'integer'}},
-                          'type': 'array'}},
- 'required': ['pk', 'name'],
- 'title': 'Group',
- 'type': 'object'}
-"""
+from .compat import text_
 
 
-def dictify(ob, schema):
-    return dictify_properties(ob, schema["properties"])
+def isoformat(ob):
+    return ob.isoformat()
 
 
-def dictify_properties(ob, properties):
+def raise_error(ob):
+    raise Exception("convert failure. unknown format xxx of {}".format(ob))
+
+
+def maybe_wrap(fn, default=None):
+    def wrapper(ob):
+        if ob is None:
+            return default
+        return fn(ob)
+    return wrapper
+
+# todo: look at required or not
+convert_function_dict = {'string': maybe_wrap(text_),
+                         'time': maybe_wrap(isoformat),
+                         'number': maybe_wrap(float),
+                         'integer': maybe_wrap(int),
+                         'boolean': maybe_wrap(bool),
+                         'date-time': maybe_wrap(isoformat),
+                         'date': maybe_wrap(isoformat),
+                         'xxx': raise_error}
+
+
+def converted_of(ob, name, type_):
+    try:
+        convert_fn = convert_function_dict[type_]
+        return convert_fn(getattr(ob, name))
+    except KeyError:
+        raise Exception("convert {} failure. unknown format {} of {}".format(name, type_, ob))
+
+
+def attribute_of(ob, name, type_):
+    return getattr(ob, name)
+
+
+def dictify(ob, schema, getter=attribute_of):
+    return dictify_properties(ob, schema["properties"], getter=getter)
+
+
+def jsonify(ob, schema, getter=converted_of):
+    return dictify_properties(ob, schema["properties"], getter=getter)
+
+
+def dictify_properties(ob, properties, getter):
     D = {}
     for k, v in properties.items():
-        D[k] = _dictify(ob, k, v)
+        D[k] = _dictify(ob, k, v, getter)
     return D
 
 
-def _dictify(ob, name, schema):
+def _dictify(ob, name, schema, getter):
     type_ = schema["type"]
     if type_ == "array":
-        return [dictify_properties(e, schema["items"]) for e in getattr(ob, name)]
+        return [dictify_properties(e, schema["items"], getter) for e in getattr(ob, name)]
     elif type_ == "object":
-        return dictify_properties(getattr(ob, name), schema["properties"])
+        return dictify_properties(getattr(ob, name), schema["properties"], getter)
     else:
-        return getattr(ob, name)
+        return getter(ob, name, type_)
