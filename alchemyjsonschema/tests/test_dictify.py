@@ -38,6 +38,6 @@ def test_it__jsonify():
     group = Group(name="ravenclaw", color="blue", users=users, created_at=created_at)
 
     result = _callFUT(group, group_schema, getter=converted_of)
-    assert result == {'name': 'ravenclaw', 'created_at': '2000-01-01T00:00:00', 'color': 'blue', 'pk': None,
-                      'users': [{'name': 'foo', 'created_at': '2000-01-01T00:00:00', 'pk': None},
-                                {'name': 'boo', 'created_at': '2000-01-01T00:00:00', 'pk': None}]}
+    assert result == {'name': 'ravenclaw', 'created_at': '2000-01-01T00:00:00Z', 'color': 'blue', 'pk': None,
+                      'users': [{'name': 'foo', 'created_at': '2000-01-01T00:00:00Z', 'pk': None},
+                                {'name': 'boo', 'created_at': '2000-01-01T00:00:00Z', 'pk': None}]}

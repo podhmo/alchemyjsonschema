@@ -16,7 +16,8 @@ except IOError:
 install_requires=[
     'setuptools',
     'sqlalchemy',
-    'jsonschema'
+    'jsonschema',
+    'strict-rfc3339'
     ]
 
 docs_extras = [

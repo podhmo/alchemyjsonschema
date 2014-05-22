@@ -7,8 +7,9 @@ from sqlalchemy.orm.relationships import RelationshipProperty
 
 from . import InvalidStatus
 
+
 def isoformat(ob):
-    return ob.isoformat()
+    return ob.isoformat() + "Z"  # xxx
 
 
 def raise_error(ob):
@@ -23,14 +24,14 @@ def maybe_wrap(fn, default=None):
     return wrapper
 
 # todo: look at required or not
-convert_function_dict = {'string': maybe_wrap(text_),
-                         'time': maybe_wrap(isoformat),
-                         'number': maybe_wrap(float),
-                         'integer': maybe_wrap(int),
-                         'boolean': maybe_wrap(bool),
-                         'date-time': maybe_wrap(isoformat),
-                         'date': maybe_wrap(isoformat),
-                         'xxx': raise_error}
+convert_function_dict = {('string', None): maybe_wrap(text_),
+                         ('time', None): maybe_wrap(isoformat),
+                         ('number', None): maybe_wrap(float),
+                         ('integer', None): maybe_wrap(int),
+                         ('boolean', None): maybe_wrap(bool),
+                         ('string', 'date-time'): maybe_wrap(isoformat),
+                         ('date', None): maybe_wrap(isoformat),
+                         ('xxx', None): raise_error}
 
 
 def converted_of(ob, name, type_):
@@ -67,7 +68,7 @@ def _dictify(ob, name, schema, getter):
     elif type_ == "object":
         return dictify_properties(getattr(ob, name), schema["properties"], getter)
     else:
-        return getter(ob, name, type_)
+        return getter(ob, name, (type_, schema.get("format")))
 
 
 class ModelLookup(object):
@@ -129,7 +130,7 @@ def objectify_propperties(params, properties, modellookup):
 def _objectify(params, name, schema, modellookup):
     type_ = schema.get("type")
     if type_ == "array":
-        return [_objectify(e, schema["items"], modellookup) for e in params[name]]
+        return [_objectify_subobject(e, name, schema["items"], modellookup) for e in params[name]]
     elif type_ is None:  # object
         submodel = modellookup(name)
         result = submodel(**{k: _objectify(params[name], k, schema[k], modellookup) for k in schema})
@@ -137,3 +138,10 @@ def _objectify(params, name, schema, modellookup):
         return result
     else:
         return params.get(name)
+
+
+def _objectify_subobject(params, name, schema, modellookup):
+    submodel = modellookup(name)
+    result = submodel(**{k: _objectify(params, k, v, modellookup) for k, v in schema.items()})
+    modellookup.pop()
+    return result
