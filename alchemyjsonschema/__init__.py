@@ -129,6 +129,16 @@ class AlsoChildrenWalker(BaseModelWalker):
 pop_marker = object()
 
 
+def get_children(name, params, splitter=".", default=None):  # todo: rename
+    prefix = name + splitter
+    if hasattr(params, "items"):
+        return {k.split(splitter, 1)[0]: v for k, v in params.items() if k.startswith(prefix)}
+    elif isinstance(params, (list, tuple)):
+        return [e.split(splitter, 1)[0] for e in params if e.startswith(prefix)]
+    else:
+        return default
+
+
 class CollectionForOverrides(object):
     def __init__(self, params, pop_marker=pop_marker):
         self.params = params or {}
@@ -137,9 +147,6 @@ class CollectionForOverrides(object):
 
     def __contains__(self, k):
         return k in self.params
-
-    def get_child(self, k):
-        return self.__class__(self.params.get(k, {}), pop_marker=self.pop_marker)
 
     def overrides(self, basedict):
         for k, v in self.params.items():
@@ -150,11 +157,44 @@ class CollectionForOverrides(object):
             self.not_used_keys.remove(k)  # xxx: KeyError?
 
 
+class ChildFactory(object):
+    def __init__(self, splitter="."):
+        self.splitter = splitter
+
+    def default_excludes(self, prop):
+        return [prop.back_populates, prop.backref]
+
+    def child_overrides(self, prop, overrides):
+        name = prop.key
+        children = get_children(name, overrides.params, splitter=self.splitter)
+        return overrides.__class__(children, pop_marker=overrides.pop_marker)
+
+    def child_walker(self, prop, walker):
+        name = prop.key
+        excludes = get_children(name, walker.includes, splitter=self.splitter, default=[])
+        excludes.extend(self.default_excludes(prop))
+
+        includes = get_children(name, walker.includes, splitter=self.splitter)
+
+        return walker.__class__(prop.mapper, includes=includes, excludes=excludes)
+
+    def child_schema(self, prop, schema_factory, walker, overrides, depth):
+        subschema = schema_factory._build_properties(walker, overrides, depth=(depth and depth - 1))
+        if prop.direction == ONETOMANY:
+            return {"type": "array", "items": subschema}
+        else:
+            return subschema
+
+
 class SchemaFactory(object):
-    def __init__(self, walker, classifier=DefaultClassfier, restriction_dict=default_restriction_dict):
+    def __init__(self, walker,
+                 classifier=DefaultClassfier,
+                 restriction_dict=default_restriction_dict,
+                 child_factory=ChildFactory(".")):
         self.classifier = classifier
         self.walker = walker  # class
         self.restriction_dict = restriction_dict
+        self.child_factory = child_factory
 
     def create(self, model, includes=None, excludes=None, overrides=None, depth=None):
         walker = self.walker(model, includes=includes, excludes=excludes)
@@ -185,13 +225,9 @@ class SchemaFactory(object):
         D = {}
         for prop in walker.walk():
             if hasattr(prop, "mapper"):     # RelationshipProperty
-                subwalker = walker.__class__(prop.mapper, excludes=[prop.back_populates, prop.backref])
-                suboverrides = overrides.get_child(prop.key)
-                subschema = self._build_properties(subwalker, suboverrides, depth=(depth and depth - 1))
-                if prop.direction == ONETOMANY:
-                    D[prop.key] = {"type": "array", "items": subschema}
-                else:
-                    D[prop.key] = subschema
+                subwalker = self.child_factory.child_walker(prop, walker)
+                suboverrides = self.child_factory.child_overrides(prop, overrides)
+                D[prop.key] = self.child_factory.child_schema(prop, self, subwalker, suboverrides, depth=depth)
             elif hasattr(prop, "columns"):  # ColumnProperty
                 for c in prop.columns:
                     sub = {}
