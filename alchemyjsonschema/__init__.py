@@ -38,7 +38,7 @@ default_mapping = {
     t.Text: "string",
     t.Integer: "integer",
     t.SmallInteger: "integer",
-    t.BigInteger: "integer",
+    t.BigInteger: "integer",  # xxx
     t.Numeric: "integer",
     t.Float: "number",
     t.DateTime: "date-time",
