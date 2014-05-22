@@ -96,6 +96,16 @@ class ModelLookup(object):
         return name, self.inspect_stack.pop()
 
 
+class ComposedModule(object):
+    def __init__(self, *modules):
+        self.modules = set(modules)
+
+    def __getattr__(self, k):
+        for m in self.modules:
+            if hasattr(m, k):
+                return getattr(m, k)
+
+
 # objectify
 def objectify(params, schema, modellookup, strict=True):
     model_class = modellookup(schema["title"])
