@@ -38,7 +38,7 @@ class User(Base):
     group = orm.relationship(Group, uselist=False, backref="users")
 
 
-def test_it():
+def test_it__sucess():
     from jsonschema import validate
     target = _makeOne()
     schema = target.create(Group, excludes=["pk"])
@@ -47,7 +47,7 @@ def test_it():
     validate(data, schema)
 
 
-def test_it2():
+def test_it__failure():
     import pytest
     from jsonschema import validate
     from jsonschema.exceptions import ValidationError
@@ -57,6 +57,14 @@ def test_it2():
 
     with pytest.raises(ValidationError):
         validate(data, schema)
+
+
+def test_it2():
+    from jsonschema import validate
+    target = _makeOne()
+    schema = target.create(User, excludes=["pk", "group_id"])
+    data = {"name": "foo", "group": {"name": "ravenclaw", "color":"blue", "pk": 1}}
+    validate(data, schema)
 
 
 def test_type__is_object():
