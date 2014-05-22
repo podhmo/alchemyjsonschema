@@ -42,7 +42,7 @@ class PyTest(TestCommand):
 
 
 setup(name='alchemyjsonschema',
-      version='0.0.2',
+      version='0.0.3',
       description='mappeing jsonschema for sqlalchemy models',
       long_description=README + '\n\n' +  CHANGES,
       classifiers=[
@@ -52,7 +52,7 @@ setup(name='alchemyjsonschema',
       keywords='',
       author="",
       author_email="",
-      url="",
+      url="https://github.com/podhmo/alchemyjsonschema",
       packages=find_packages(),
       include_package_data=True,
       zip_safe=False,
