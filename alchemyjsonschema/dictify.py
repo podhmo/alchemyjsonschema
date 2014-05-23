@@ -4,12 +4,15 @@ logger = logging.getLogger(__name__)
 from .compat import text_
 from sqlalchemy.inspection import inspect
 from sqlalchemy.orm.relationships import RelationshipProperty
-
 from . import InvalidStatus
 
 
 def isoformat(ob):
     return ob.isoformat() + "Z"  # xxx
+
+
+def isoformat0(ob):
+    return ob.isoformat()
 
 
 def raise_error(ob):
@@ -25,12 +28,12 @@ def maybe_wrap(fn, default=None):
 
 # todo: look at required or not
 convert_function_dict = {('string', None): maybe_wrap(text_),
-                         ('time', None): maybe_wrap(isoformat),
+                         ('string', 'time',): maybe_wrap(isoformat),
                          ('number', None): maybe_wrap(float),
                          ('integer', None): maybe_wrap(int),
                          ('boolean', None): maybe_wrap(bool),
                          ('string', 'date-time'): maybe_wrap(isoformat),
-                         ('date', None): maybe_wrap(isoformat),
+                         ('string', 'date'): maybe_wrap(isoformat0),
                          ('xxx', None): raise_error}
 
 

@@ -10,6 +10,7 @@ from jsonschema import (
     validate,
     FormatChecker
 )
+import alchemyjsonschema.custom.format  # patch
 from jsonschema.validators import (
     Draft3Validator,
     Draft4Validator

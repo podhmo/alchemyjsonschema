@@ -38,12 +38,12 @@ default_mapping = {
     t.Text: "string",
     t.Integer: "integer",
     t.SmallInteger: "integer",
-    t.BigInteger: "integer",  # xxx
+    t.BigInteger: "string",  # xxx
     t.Numeric: "integer",
     t.Float: "number",
     t.DateTime: "string",
-    t.Date: "date",
-    t.Time: "time",  # xxx
+    t.Date: "string",
+    t.Time: "string",  # xxx
     t.LargeBinary: "xxx",
     t.Binary: "xxx",
     t.Boolean: "boolean",
@@ -63,13 +63,25 @@ def string_max_length(column, sub):
 def enum_one_of(column, sub):
     sub["enum"] = list(column.type.enums)
 
+
 def datetime_format(column, sub):
     sub["format"] = "date-time"
 
+
+def date_format(column, sub):
+    sub["format"] = "date"
+
+
+def time_format(column, sub):
+    sub["format"] = "time"
+
+
 default_restriction_dict = {
     t.String: string_max_length,
-    t.Enum: enum_one_of, 
-    t.DateTime: datetime_format
+    t.Enum: enum_one_of,
+    t.DateTime: datetime_format,
+    t.Date: date_format,
+    t.Time: time_format
 }
 
 
