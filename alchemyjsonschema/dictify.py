@@ -5,11 +5,19 @@ from operator import getitem
 from .compat import text_
 from sqlalchemy.inspection import inspect
 from sqlalchemy.orm.relationships import RelationshipProperty
+import isodate
 from .custom.format import (
-    parse_time, 
-    parse_date
+    parse_time,  # more strict than isodate
+    parse_date   # more strict
 )
 from . import InvalidStatus
+import pytz
+
+
+def datetime_rfc3339(ob):
+    if ob.tzinfo:
+        return ob.isoformat()
+    return pytz.utc.localize(ob).isoformat()
 
 
 def isoformat(ob):
@@ -37,27 +45,19 @@ jsonify_dict = {('string', None): maybe_wrap(text_),
                 ('number', None): maybe_wrap(float),
                 ('integer', None): maybe_wrap(int),
                 ('boolean', None): maybe_wrap(bool),
-                ('string', 'date-time'): maybe_wrap(isoformat),
+                ('string', 'date-time'): maybe_wrap(datetime_rfc3339),
                 ('string', 'date'): maybe_wrap(isoformat0),
                 ('xxx', None): raise_error}
 
 
-# def rmaybe_wrap(fn, default=None):
-#     def wrapper(ob):
-#         if ob == "null":
-#             return default
-#         return fn(ob)
-#     return wrapper
-
-
-# normalize_dict = {('string', None): rmaybe_wrap(text_),
-#                   ('string', 'time',): rmaybe_wrap(parse_time),
-#                   ('number', None): rmaybe_wrap(float),
-#                   ('integer', None): rmaybe_wrap(int),
-#                   ('boolean', None): rmaybe_wrap(bool),
-#                   ('string', 'date-time'): rmaybe_wrap(),
-#                   ('string', 'date'): rmaybe_wrap(parse_date),
-#                   ('xxx', None): raise_error}
+normalize_dict = {('string', None): maybe_wrap(text_),
+                  ('string', 'time',): maybe_wrap(parse_time),
+                  ('number', None): maybe_wrap(float),
+                  ('integer', None): maybe_wrap(int),
+                  ('boolean', None): maybe_wrap(bool),
+                  ('string', 'date-time'): maybe_wrap(isodate.parse_datetime),
+                  ('string', 'date'): maybe_wrap(parse_date),
+                  ('xxx', None): raise_error}
 
 
 def jsonify_of(ob, name, type_):

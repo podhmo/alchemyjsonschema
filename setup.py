@@ -17,7 +17,9 @@ install_requires=[
     'setuptools',
     'sqlalchemy',
     'jsonschema',
-    'strict-rfc3339'
+    'strict-rfc3339',
+    'isodate',  # hmm.
+    'pytz'
     ]
 
 docs_extras = [
