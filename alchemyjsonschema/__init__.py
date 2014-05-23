@@ -5,6 +5,7 @@ from sqlalchemy.orm.properties import ColumnProperty
 from sqlalchemy.orm.relationships import RelationshipProperty
 from sqlalchemy.sql.visitors import VisitableType
 from sqlalchemy.orm.base import ONETOMANY
+from sqlalchemy.sql.type_api import TypeEngine
 
 
 class InvalidStatus(Exception):
@@ -250,6 +251,8 @@ class SchemaFactory(object):
                     if type(c.type) != VisitableType:
                         itype, sub["type"] = self.classifier[c.type]
                         for tcls in itype.__mro__:
+                            if tcls is TypeEngine:
+                                break
                             fn = self.restriction_dict.get(tcls)
                             if fn is not None:
                                 fn(c, sub)
