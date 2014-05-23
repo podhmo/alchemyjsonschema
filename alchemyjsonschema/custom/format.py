@@ -2,14 +2,25 @@
 import re
 from jsonschema._format import _checks_drafts, FormatChecker, _draft_checkers
 import calendar
-
+from datetime import date, time
 from ..compat import string_types
 
 """
 this is custom format
 """
-time_rx = re.compile("(\d{2}):(\d{2}):(\d{2})(?:\.\d+)?(Z|([+\-])(\d{2}):(\d{2}))")
+time_rx = re.compile("(\d{2}):(\d{2}):(\d{2})(\.\d+)?(Z|([+\-])(\d{2}):(\d{2}))")
 date_rx = re.compile("(\d{4})\-(\d{2})\-(\d{2})")
+
+
+def parse_date(date_string):
+    m = date_rx.match(date_string)
+    if m is None:
+        return False
+
+    groups = m.groups()
+
+    year, month, day = [int(x) for x in groups[:3]]
+    return date(year, month, day)
 
 
 def validate_date(date_string):
@@ -37,6 +48,19 @@ def validate_date(date_string):
     return True
 
 
+def parse_time(time_string):
+    m = time_rx.match(time_string)
+    if m is None:
+        return False
+
+    groups = m.groups()
+
+    hour, minute, second = [int(x) for x in groups[:3]]
+    if groups[4] != "Z":
+        return time(hour, minute, second, int(groups(3)))
+    return time(hour, minute, second)
+
+
 def validate_time(time_string):
     m = time_rx.match(time_string)
     if m is None:
@@ -49,8 +73,8 @@ def validate_time(time_string):
         # forbid leap seconds :-(. See README
         return False
 
-    if groups[3] != "Z":
-        (offset_sign, offset_hours, offset_mins) = groups[4:]
+    if groups[4] != "Z":
+        (offset_sign, offset_hours, offset_mins) = groups[5:]
         if not (0 <= int(offset_hours) <= 23 and 0 <= int(offset_mins) <= 59):
             return False
 

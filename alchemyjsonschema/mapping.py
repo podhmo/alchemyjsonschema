@@ -4,13 +4,13 @@ from .dictify import (
     objectify,
     jsonify,
     dictify,
+    normalize,
     ModelLookup
 )
 from jsonschema import (
     validate,
     FormatChecker
 )
-import alchemyjsonschema.custom.format  # patch
 from jsonschema.validators import (
     Draft3Validator,
     Draft4Validator
@@ -27,6 +27,9 @@ class Mapping(object):
 
     def jsondict_from_object(self, ob):
         return jsonify(ob, self.schema)
+
+    def dict_from_jsondict(self, jsondict):
+        return normalize(jsondict, self.schema)
 
     def dict_from_object(self, ob):
         return dictify(ob, self.schema)

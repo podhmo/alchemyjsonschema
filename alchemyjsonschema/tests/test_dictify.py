@@ -27,7 +27,7 @@ def test_it__jsonify():
     from alchemyjsonschema import SchemaFactory, AlsoChildrenWalker
     from alchemyjsonschema.tests.models import Group, User
     from datetime import datetime
-    from alchemyjsonschema.dictify import converted_of
+    from alchemyjsonschema.dictify import jsonify_of
 
     factory = SchemaFactory(AlsoChildrenWalker)
     group_schema = factory.create(Group)
@@ -37,7 +37,7 @@ def test_it__jsonify():
              User(name="boo", created_at=created_at)]
     group = Group(name="ravenclaw", color="blue", users=users, created_at=created_at)
 
-    result = _callFUT(group, group_schema, getter=converted_of)
+    result = _callFUT(group, group_schema, convert=jsonify_of)
     assert result == {'name': 'ravenclaw', 'created_at': '2000-01-01T00:00:00Z', 'color': 'blue', 'pk': None,
                       'users': [{'name': 'foo', 'created_at': '2000-01-01T00:00:00Z', 'pk': None},
                                 {'name': 'boo', 'created_at': '2000-01-01T00:00:00Z', 'pk': None}]}
