@@ -11,7 +11,7 @@ def test_it__simple():
     from datetime import datetime
 
     factory = SchemaFactory(SingleModelWalker)
-    user_schema = factory.create(models.User)
+    user_schema = factory(models.User)
 
     created_at = datetime(2000, 1, 1)
     user_dict = dict(pk=1, name="foo", created_at=created_at, group_id=10)
@@ -34,7 +34,7 @@ def test_it__strict_true__then__required_are_notfound__error_raised():
     import pytest
 
     factory = SchemaFactory(SingleModelWalker)
-    user_schema = factory.create(models.User)
+    user_schema = factory(models.User)
 
     created_at = datetime(2000, 1, 1)
     user_dict = dict(name="foo", created_at=created_at)  # pk is not found
@@ -51,7 +51,7 @@ def test_it__strict_false__then__required_are_notfound__ok():
     from datetime import datetime
 
     factory = SchemaFactory(SingleModelWalker)
-    user_schema = factory.create(models.User)
+    user_schema = factory(models.User)
 
     created_at = datetime(2000, 1, 1)
     user_dict = dict(name="foo", created_at=created_at)  # pk is not found
@@ -73,7 +73,7 @@ def test_it_complex():
     from datetime import datetime
 
     factory = SchemaFactory(AlsoChildrenWalker)
-    user_schema = factory.create(models.User)
+    user_schema = factory(models.User)
 
     created_at = datetime(2000, 1, 1)
     created_at2 = datetime(2001, 1, 1)

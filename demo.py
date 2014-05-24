@@ -29,7 +29,7 @@ from alchemyjsonschema import SchemaFactory
 from alchemyjsonschema import SingleModelWalker
 
 factory = SchemaFactory(SingleModelWalker)
-pp.pprint(factory.create(User))
+pp.pprint(factory(User))
 
 """
 {'properties': {'group_id': {'type': 'integer'},
@@ -47,7 +47,7 @@ from alchemyjsonschema import SchemaFactory
 from alchemyjsonschema import OneModelOnlyWalker
 
 factory = SchemaFactory(OneModelOnlyWalker)
-pp.pprint(factory.create(User))
+pp.pprint(factory(User))
 
 """
 {'properties': {'name': {'maxLength': 255, 'type': 'string'},
@@ -64,7 +64,7 @@ from alchemyjsonschema import SchemaFactory
 from alchemyjsonschema import AlsoChildrenWalker
 
 factory = SchemaFactory(AlsoChildrenWalker)
-pp.pprint(factory.create(User))
+pp.pprint(factory(User))
 
 """
 {'properties': {'group': {'name': {'maxLength': 255, 'type': 'string'},
@@ -77,7 +77,7 @@ pp.pprint(factory.create(User))
  'type': 'object'}
 """
 
-pp.pprint(factory.create(Group))
+pp.pprint(factory(Group))
 
 """
 {'description': 'model for test',

@@ -54,11 +54,11 @@ class MyModel2(Base):
 
 def test_it():
     target = _makeOne()
-    result = target.create(MyModel)
+    result = target(MyModel)
     assert result["properties"] == {"pk": {"type": "integer"}}
 
 
 def test_it2():
     target = _makeOne()
-    result = target.create(MyModel)
+    result = target(MyModel)
     assert result["properties"] == {"pk": {"type": "integer"}}

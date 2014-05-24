@@ -37,7 +37,7 @@ class User(Base):
 def test_properties__default__includes__foreign_keys():
     from alchemyjsonschema import SingleModelWalker
     target = _makeOne(SingleModelWalker)
-    result = target.create(User)
+    result = target(User)
 
     assert "properties" in result
     assert list(sorted(result["properties"].keys())) == ["group_id", "name", "pk"]
@@ -46,7 +46,7 @@ def test_properties__default__includes__foreign_keys():
 def test_required__are_foreignKey_and_nullable_is_false():
     from alchemyjsonschema import SingleModelWalker
     target = _makeOne(SingleModelWalker)
-    result = target.create(User)
+    result = target(User)
 
     assert "required" in result
     assert list(sorted(result["required"])) == ["group_id", "pk"]
@@ -55,7 +55,7 @@ def test_required__are_foreignKey_and_nullable_is_false():
 def test_properties__only_onesself__not_includes__foreign_keys():
     from alchemyjsonschema import OneModelOnlyWalker
     target = _makeOne(OneModelOnlyWalker)
-    result = target.create(User)
+    result = target(User)
 
     assert "required" in result
     assert list(sorted(result["properties"])) == ["name", "pk"]
@@ -64,7 +64,7 @@ def test_properties__only_onesself__not_includes__foreign_keys():
 def test_properties__include_OnetoMany_relation():
     from alchemyjsonschema import AlsoChildrenWalker
     target = _makeOne(AlsoChildrenWalker)
-    result = target.create(User)
+    result = target(User)
 
     assert "required" in result
     assert list(sorted(result["properties"])) == ["group", "name", "pk"]
@@ -75,7 +75,7 @@ def test_properties__include_OnetoMany_relation():
 def test_properties__include_ManytoOne_backref():
     from alchemyjsonschema import AlsoChildrenWalker
     target = _makeOne(AlsoChildrenWalker)
-    result = target.create(Group)
+    result = target(Group)
 
     assert "required" in result
     assert list(sorted(result["properties"])) == ["name", "pk", "users"]
@@ -134,7 +134,7 @@ class A5(Base):
 def test_properties__default_depth_is__traverse_all_chlidren():
     from alchemyjsonschema import AlsoChildrenWalker
     target = _makeOne(AlsoChildrenWalker)
-    result = target.create(A0)
+    result = target(A0)
 
     assert "required" in result
     assert list(sorted(result["properties"])) == ["children", "pk"]
@@ -146,7 +146,7 @@ def test_properties__default_depth_is__traverse_all_chlidren():
 def test_properties__default_depth_is__2__traverse_depth2():
     from alchemyjsonschema import AlsoChildrenWalker
     target = _makeOne(AlsoChildrenWalker)
-    result = target.create(A0, depth=2)
+    result = target(A0, depth=2)
 
     assert "required" in result
     assert list(sorted(result["properties"])) == ["children", "pk"]
@@ -158,7 +158,7 @@ def test_properties__default_depth_is__2__traverse_depth2():
 def test_properties__default_depth_is__3__traverse_depth3():
     from alchemyjsonschema import AlsoChildrenWalker
     target = _makeOne(AlsoChildrenWalker)
-    result = target.create(A0, depth=3)
+    result = target(A0, depth=3)
 
     assert "required" in result
     assert list(sorted(result["properties"])) == ["children", "pk"]

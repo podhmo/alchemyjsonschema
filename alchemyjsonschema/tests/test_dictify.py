@@ -10,7 +10,7 @@ def test_it__dictify():
     from datetime import datetime
 
     factory = SchemaFactory(AlsoChildrenWalker)
-    group_schema = factory.create(Group)
+    group_schema = factory(Group)
 
     created_at = datetime(2000, 1, 1)
     users = [User(name="foo", created_at=created_at),
@@ -30,7 +30,7 @@ def test_it__jsonify():
     from alchemyjsonschema.dictify import jsonify_of
 
     factory = SchemaFactory(AlsoChildrenWalker)
-    group_schema = factory.create(Group)
+    group_schema = factory(Group)
 
     created_at = datetime(2000, 1, 1)
     users = [User(name="foo", created_at=created_at),

@@ -213,7 +213,7 @@ class SchemaFactory(object):
         self.restriction_dict = restriction_dict
         self.child_factory = child_factory
 
-    def create(self, model, includes=None, excludes=None, overrides=None, depth=None):
+    def __call__(self, model, includes=None, excludes=None, overrides=None, depth=None):
         walker = self.walker(model, includes=includes, excludes=excludes)
         overrides = CollectionForOverrides(overrides or {})
 

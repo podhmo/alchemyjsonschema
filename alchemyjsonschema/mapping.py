@@ -68,8 +68,8 @@ class MappingFactory(object):
         self.format_checker = format_checker or FormatChecker()
         self.module = module
 
-    def create(self, model, includes=None, excludes=None, depth=None):
-        schema = self.schema_factory.create(model, includes=includes, excludes=excludes, depth=depth)
+    def __call__(self, model, includes=None, excludes=None, depth=None):
+        schema = self.schema_factory(model, includes=includes, excludes=excludes, depth=depth)
         validator = self.validator_class(schema, resolver=self.resolver, format_checker=self.format_checker)
         modellookup = self._ModelLookup(self.module)
         mapping = self._Mapping(validator, model, modellookup)

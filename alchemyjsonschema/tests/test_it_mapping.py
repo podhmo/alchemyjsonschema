@@ -22,7 +22,7 @@ def _makeOne(schema_factory, model, *args, **kwargs):
     import alchemyjsonschema.tests.models as models
     module = models
     mapping_factory = _getTarget()(schema_factory, module, *args, **kwargs)
-    return mapping_factory.create(model)
+    return mapping_factory(model)
 
 
 def test_it__dict_from_model_object():
