@@ -5,11 +5,13 @@ from operator import getitem
 from .compat import text_
 from sqlalchemy.inspection import inspect
 from sqlalchemy.orm.relationships import RelationshipProperty
+from functools import partial
 import isodate
 from .custom.format import (
     parse_time,  # more strict than isodate
     parse_date   # more strict
 )
+from jsonschema import validate
 from . import InvalidStatus
 import pytz
 
@@ -60,17 +62,17 @@ normalize_dict = {('string', None): maybe_wrap(text_),
                   ('xxx', None): raise_error}
 
 
-def jsonify_of(ob, name, type_):
+def jsonify_of(ob, name, type_, registry=jsonify_dict):
     try:
-        convert_fn = jsonify_dict[type_]
+        convert_fn = registry[type_]
         return convert_fn(getattr(ob, name))
     except KeyError:
         raise Exception("convert {} failure. unknown format {} of {}".format(name, type_, ob))
 
 
-def normalize_of(ob, name, type_):
+def normalize_of(ob, name, type_, registry=normalize_dict):
     try:
-        convert_fn = normalize_dict[type_]
+        convert_fn = registry[type_]
         return convert_fn(ob[name])
     except KeyError:
         raise Exception("convert {} failure. unknown format {} of {}".format(name, type_, ob))
@@ -84,11 +86,13 @@ def dictify(ob, schema, convert=attribute_of, getter=getattr):
     return dictify_properties(ob, schema["properties"], convert=convert, getter=getter)
 
 
-def jsonify(ob, schema, convert=jsonify_of, getter=getattr):
+def jsonify(ob, schema, convert=jsonify_of, getter=getattr, registry=jsonify_dict):
+    convert = partial(convert, registry=registry)
     return dictify_properties(ob, schema["properties"], convert=convert, getter=getter)
 
 
-def normalize(ob, schema, convert=normalize_of, getter=getitem):
+def normalize(ob, schema, convert=normalize_of, getter=getitem, registry=normalize_dict):
+    convert = partial(convert, registry=registry)
     return dictify_properties(ob, schema["properties"], convert=convert, getter=getter)
 
 
@@ -183,3 +187,16 @@ def _objectify_subobject(params, name, schema, modellookup):
     result = submodel(**{k: _objectify(params, k, v, modellookup) for k, v in schema.items()})
     modellookup.pop()
     return result
+
+
+class ErrorFound(Exception):  # xxx:
+    pass
+
+
+def validate_all(data, validator):
+    errors = []
+    for e in validator.iter_errors(data):
+        errors.append(dict(name=e.path[0], reason=e.validator))
+    if errors:
+        raise ErrorFound(errors)
+    return data

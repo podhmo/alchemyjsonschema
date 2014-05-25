@@ -5,7 +5,10 @@ from .dictify import (
     jsonify,
     dictify,
     normalize,
-    ModelLookup
+    validate_all,
+    ModelLookup,
+    jsonify_dict,
+    normalize_dict,
 )
 from jsonschema import (
     validate,
@@ -17,19 +20,25 @@ from jsonschema.validators import (
 )
 
 
+class DefaultRegistry:
+    jsonify = jsonify_dict
+    normalize = normalize_dict
+
+
 class Mapping(object):
-    def __init__(self, validator, model, modellookup):
+    def __init__(self, validator, model, modellookup, registry=DefaultRegistry):
         self.validator = validator
         self.format_checker = validator.format_checker
         self.schema = validator.schema
         self.model = model
         self.modellookup = modellookup
+        self.registry = registry
 
     def jsondict_from_object(self, ob):
-        return jsonify(ob, self.schema)
+        return jsonify(ob, self.schema, registry=self.registry.jsonify)
 
     def dict_from_jsondict(self, jsondict):
-        return normalize(jsondict, self.schema)
+        return normalize(jsondict, self.schema, registry=self.registry.normalize)
 
     def dict_from_object(self, ob):
         return dictify(ob, self.schema)
@@ -42,19 +51,6 @@ class Mapping(object):
 
     def validate_all_jsondict(self, jsondict):
         return validate_all(jsondict, self.validator)
-
-
-class ErrorFound(Exception):  # xxx:
-    pass
-
-
-def validate_all(data, validator):
-    errors = []
-    for e in validator.iter_errors(data):
-        errors.append(dict(name=e.path[0], reason=e.validator))
-    if errors:
-        raise ErrorFound(errors)
-    return None
 
 
 class MappingFactory(object):
