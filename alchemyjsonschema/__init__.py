@@ -116,18 +116,28 @@ class BaseModelWalker(object):
             if set(includes).intersection(excludes):
                 raise InvalidStatus("Conflict includes={}, exclude={}".format(includes, excludes))
 
+# mapper.column_attrs and mapper.attrs is not ordered. define our custom iterate function `iterate'
+
 
 class SingleModelWalker(BaseModelWalker):
+    def iterate(self):
+        for c in self.mapper.local_table.columns:
+            yield self.mapper._props[c.name]  # danger!! not immutable
+
     def walk(self):
-        for prop in self.mapper.column_attrs:
+        for prop in self.iterate():
             if self.includes is None or prop.key in self.includes:
                 if self.excludes is None or prop.key not in self.excludes:
                     yield prop
 
 
 class OneModelOnlyWalker(BaseModelWalker):
+    def iterate(self):
+        for c in self.mapper.local_table.columns:
+            yield self.mapper._props[c.name]  # danger!! not immutable
+
     def walk(self):
-        for prop in self.mapper.column_attrs:
+        for prop in self.iterate():
             if self.includes is None or prop.key in self.includes:
                 if self.excludes is None or prop.key not in self.excludes:
                     if not any(c.foreign_keys for c in getattr(prop, "columns", Empty)):
@@ -135,8 +145,15 @@ class OneModelOnlyWalker(BaseModelWalker):
 
 
 class AlsoChildrenWalker(BaseModelWalker):
+    def iterate(self):
+        # self.mapper.attrs
+        for c in self.mapper.local_table.columns:
+            yield self.mapper._props[c.name]  # danger!! not immutable
+        for prop in self.mapper.relationships:
+            yield prop
+
     def walk(self):
-        for prop in self.mapper.attrs:
+        for prop in self.iterate():
             if isinstance(prop, (ColumnProperty, RelationshipProperty)):
                 if self.includes is None or prop.key in self.includes:
                     if self.excludes is None or prop.key not in self.excludes:
