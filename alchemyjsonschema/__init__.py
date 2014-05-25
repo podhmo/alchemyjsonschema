@@ -101,8 +101,8 @@ class Classifier(object):
                 return type_, self.mapping[type_]
         raise InvalidStatus("notfound")
 
-_DefaultClassifier = Classifier(default_column_to_schema)
-DefaultClassifier = lambda: _DefaultClassifier
+DefaultClassifier = Classifier(default_column_to_schema)
+DefaultClassifierGetter = lambda: DefaultClassifier
 Empty = ()
 
 
@@ -206,7 +206,7 @@ class ChildFactory(object):
 
 class SchemaFactory(object):
     def __init__(self, walker,
-                 get_classifier=DefaultClassifier,
+                 get_classifier=DefaultClassifierGetter,
                  restriction_dict=default_restriction_dict,
                  child_factory=ChildFactory(".")):
         self.get_classifier = get_classifier
