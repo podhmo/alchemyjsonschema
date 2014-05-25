@@ -106,10 +106,11 @@ Empty = ()
 
 
 class BaseModelWalker(object):
-    def __init__(self, model, includes=None, excludes=None):
+    def __init__(self, model, includes=None, excludes=None, history=None):
         self.mapper = inspect(model).mapper
         self.includes = includes
         self.excludes = excludes
+        self.history = history or []
         if includes and excludes:
             if set(includes).intersection(excludes):
                 raise InvalidStatus("Conflict includes={}, exclude={}".format(includes, excludes))
@@ -140,8 +141,9 @@ class AlsoChildrenWalker(BaseModelWalker):
             if isinstance(prop, (ColumnProperty, RelationshipProperty)):
                 if self.includes is None or prop.key in self.includes:
                     if self.excludes is None or prop.key not in self.excludes:
-                        if not any(c.foreign_keys for c in getattr(prop, "columns", Empty)):
-                            yield prop
+                        if prop not in self.history:
+                            if not any(c.foreign_keys for c in getattr(prop, "columns", Empty)):
+                                yield prop
 
 pop_marker = object()
 
@@ -186,17 +188,16 @@ class ChildFactory(object):
         children = get_children(name, overrides.params, splitter=self.splitter)
         return overrides.__class__(children, pop_marker=overrides.pop_marker)
 
-    def child_walker(self, prop, walker):
+    def child_walker(self, prop, walker, history=None):
         name = prop.key
         excludes = get_children(name, walker.includes, splitter=self.splitter, default=[])
         excludes.extend(self.default_excludes(prop))
-
         includes = get_children(name, walker.includes, splitter=self.splitter)
 
-        return walker.__class__(prop.mapper, includes=includes, excludes=excludes)
+        return walker.__class__(prop.mapper, includes=includes, excludes=excludes, history=history)
 
-    def child_schema(self, prop, schema_factory, walker, overrides, depth):
-        subschema = schema_factory._build_properties(walker, overrides, depth=(depth and depth - 1))
+    def child_schema(self, prop, schema_factory, walker, overrides, depth, history):
+        subschema = schema_factory._build_properties(walker, overrides, depth=(depth and depth - 1), history=history)
         if prop.direction == ONETOMANY:
             return {"type": "array", "items": subschema}
         else:
@@ -235,16 +236,21 @@ class SchemaFactory(object):
             schema["required"] = required
         return schema
 
-    def _build_properties(self, walker, overrides, depth=None):
+    def _build_properties(self, walker, overrides, depth=None, history=None):
         if depth is not None and depth <= 0:
             return {}
 
         D = {}
+        if history is None:
+            history = []
+
         for prop in walker.walk():
             if hasattr(prop, "mapper"):     # RelationshipProperty
-                subwalker = self.child_factory.child_walker(prop, walker)
+                history.append(prop)
+                subwalker = self.child_factory.child_walker(prop, walker, history=history)
                 suboverrides = self.child_factory.child_overrides(prop, overrides)
-                D[prop.key] = self.child_factory.child_schema(prop, self, subwalker, suboverrides, depth=depth)
+                D[prop.key] = self.child_factory.child_schema(prop, self, subwalker, suboverrides, depth=depth, history=history)
+                history.pop()
             elif hasattr(prop, "columns"):  # ColumnProperty
                 for c in prop.columns:
                     sub = {}

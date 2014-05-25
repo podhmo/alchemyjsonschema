@@ -165,3 +165,37 @@ def test_properties__default_depth_is__3__traverse_depth3():
     assert (result["properties"]
             ["children"]["items"]["children"]["items"]
             ["pk"]["description"] == "primary key2")
+
+
+# regression
+# X.y -> Y.z -> Z.y -> Y.z -> Z.y
+
+class Y(Base):
+    __tablename__ = "y"
+    id = sa.Column(sa.Integer, primary_key=True, doc="primary key")
+    z_id = sa.Column(sa.Integer, sa.ForeignKey('z.id'))
+    zs = orm.relationship("Z", foreign_keys=[z_id])
+
+
+class X(Base):
+    __tablename__ = "x"
+    id = sa.Column(sa.Integer, primary_key=True, doc="primary key")
+    y_id = sa.Column(sa.Integer, sa.ForeignKey('y.id'))
+    ys = orm.relationship(Y, foreign_keys=[y_id])
+
+
+class Z(Base):
+    __tablename__ = "z"
+    id = sa.Column(sa.Integer, primary_key=True, doc="primary key")
+    y_id = sa.Column(sa.Integer, sa.ForeignKey('y.id'))
+    ys = orm.relationship(Y, foreign_keys=[y_id])
+
+
+def test_properties__infinite_loop():
+    from alchemyjsonschema import AlsoChildrenWalker
+    target = _makeOne(AlsoChildrenWalker)
+    result = target(X)
+    assert "required" in result
+    assert list(sorted(result["properties"])) == ["id", "ys"]
+
+    assert result["properties"]["ys"]["zs"]["id"]["description"] == "primary key"
