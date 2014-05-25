@@ -119,21 +119,19 @@ class BaseModelWalker(object):
 
 class SingleModelWalker(BaseModelWalker):
     def walk(self):
-        for prop in self.mapper.attrs:
-            if isinstance(prop, ColumnProperty):
-                if self.includes is None or prop.key in self.includes:
-                    if self.excludes is None or prop.key not in self.excludes:
-                        yield prop
+        for prop in self.mapper.column_attrs:
+            if self.includes is None or prop.key in self.includes:
+                if self.excludes is None or prop.key not in self.excludes:
+                    yield prop
 
 
 class OneModelOnlyWalker(BaseModelWalker):
     def walk(self):
-        for prop in self.mapper.attrs:
-            if isinstance(prop, ColumnProperty):
-                if self.includes is None or prop.key in self.includes:
-                    if self.excludes is None or prop.key not in self.excludes:
-                        if not any(c.foreign_keys for c in getattr(prop, "columns", Empty)):
-                            yield prop
+        for prop in self.mapper.column_attrs:
+            if self.includes is None or prop.key in self.includes:
+                if self.excludes is None or prop.key not in self.excludes:
+                    if not any(c.foreign_keys for c in getattr(prop, "columns", Empty)):
+                        yield prop
 
 
 class AlsoChildrenWalker(BaseModelWalker):
