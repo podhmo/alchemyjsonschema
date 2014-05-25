@@ -1,4 +1,5 @@
 # -*- coding:utf-8 -*-
+from collections import OrderedDict
 import sqlalchemy.types as t
 from sqlalchemy.inspection import inspect
 from sqlalchemy.orm.properties import ColumnProperty
@@ -208,7 +209,9 @@ class SchemaFactory(object):
     def __init__(self, walker,
                  classifier=DefaultClassfier,
                  restriction_dict=default_restriction_dict,
+                 container_factory=OrderedDict,
                  child_factory=ChildFactory(".")):
+        self.container_factory = container_factory
         self.classifier = classifier
         self.walker = walker  # class
         self.restriction_dict = restriction_dict
@@ -238,9 +241,9 @@ class SchemaFactory(object):
 
     def _build_properties(self, walker, overrides, depth=None, history=None):
         if depth is not None and depth <= 0:
-            return {}
+            return self.container_factory()
 
-        D = {}
+        D = self.container_factory()
         if history is None:
             history = []
 
