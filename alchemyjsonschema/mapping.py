@@ -18,11 +18,17 @@ from jsonschema.validators import (
     Draft3Validator,
     Draft4Validator
 )
+from . import (
+    default_restriction_dict,
+    default_column_to_schema
+)
 
 
 class DefaultRegistry:
     jsonify = jsonify_dict
     normalize = normalize_dict
+    restriction = default_restriction_dict
+    column_to_schema = default_column_to_schema
 
 
 class Mapping(object):

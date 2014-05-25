@@ -5,8 +5,8 @@ def _getTarget():
 
 
 def _makeOne(walker):
-    from alchemyjsonschema import DefaultClassfier
-    return _getTarget()(walker, DefaultClassfier)
+    from alchemyjsonschema import DefaultClassifier
+    return _getTarget()(walker, DefaultClassifier)
 
 
 # definition

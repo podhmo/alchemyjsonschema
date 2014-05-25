@@ -7,9 +7,9 @@ def _getTarget():
 def _makeOne(*args, **kwargs):
     from alchemyjsonschema import (
         SingleModelWalker,
-        DefaultClassfier
+        DefaultClassifier
     )
-    return _getTarget()(SingleModelWalker, DefaultClassfier)
+    return _getTarget()(SingleModelWalker, DefaultClassifier)
 
 
 # definition

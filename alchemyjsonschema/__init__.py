@@ -34,7 +34,7 @@ JSON Schema defines seven primitive types for JSON values:
 """
 
 #  tentative
-default_mapping = {
+default_column_to_schema = {
     t.String: "string",
     t.Text: "string",
     t.Integer: "integer",
@@ -87,7 +87,7 @@ default_restriction_dict = {
 
 
 class Classifier(object):
-    def __init__(self, mapping=default_mapping):
+    def __init__(self, mapping=default_column_to_schema):
         self.mapping = mapping
 
     def __getitem__(self, k):
@@ -101,7 +101,8 @@ class Classifier(object):
                 return type_, self.mapping[type_]
         raise InvalidStatus("notfound")
 
-DefaultClassfier = Classifier(default_mapping)
+_DefaultClassifier = Classifier(default_column_to_schema)
+DefaultClassifier = lambda: _DefaultClassifier
 Empty = ()
 
 
@@ -205,13 +206,17 @@ class ChildFactory(object):
 
 class SchemaFactory(object):
     def __init__(self, walker,
-                 classifier=DefaultClassfier,
+                 get_classifier=DefaultClassifier,
                  restriction_dict=default_restriction_dict,
                  child_factory=ChildFactory(".")):
-        self.classifier = classifier
+        self.get_classifier = get_classifier
         self.walker = walker  # class
         self.restriction_dict = restriction_dict
         self.child_factory = child_factory
+
+    @property
+    def classifier(self):
+        return self.get_classifier()
 
     def __call__(self, model, includes=None, excludes=None, overrides=None, depth=None):
         walker = self.walker(model, includes=includes, excludes=excludes)
@@ -239,6 +244,7 @@ class SchemaFactory(object):
         if depth is not None and depth <= 0:
             return {}
 
+        classifier = self.classifier
         D = {}
         for prop in walker.walk():
             if hasattr(prop, "mapper"):     # RelationshipProperty
@@ -249,7 +255,7 @@ class SchemaFactory(object):
                 for c in prop.columns:
                     sub = {}
                     if type(c.type) != VisitableType:
-                        itype, sub["type"] = self.classifier[c.type]
+                        itype, sub["type"] = classifier[c.type]
                         for tcls in itype.__mro__:
                             if tcls is TypeEngine:
                                 break
