@@ -34,7 +34,7 @@ JSON Schema defines seven primitive types for JSON values:
 """
 
 #  tentative
-default_mapping = {
+default_column_to_schema = {
     t.String: "string",
     t.Text: "string",
     t.Integer: "integer",
@@ -87,7 +87,7 @@ default_restriction_dict = {
 
 
 class Classifier(object):
-    def __init__(self, mapping=default_mapping):
+    def __init__(self, mapping=default_column_to_schema):
         self.mapping = mapping
 
     def __getitem__(self, k):
@@ -101,7 +101,7 @@ class Classifier(object):
                 return type_, self.mapping[type_]
         raise InvalidStatus("notfound")
 
-DefaultClassfier = Classifier(default_mapping)
+DefaultClassfier = Classifier(default_column_to_schema)
 Empty = ()
 
 
