@@ -99,7 +99,7 @@ class Classifier(object):
         for type_ in self.mapping:
             if issubclass(cls, type_):
                 return type_, self.mapping[type_]
-        raise InvalidStatus("notfound")
+        raise InvalidStatus("notfound: {k}".format(k=k))
 
 DefaultClassfier = Classifier(default_column_to_schema)
 Empty = ()
