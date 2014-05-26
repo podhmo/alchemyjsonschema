@@ -1,7 +1,6 @@
 # -*- coding:utf-8 -*-
 import logging
 logger = logging.getLogger(__name__)
-from operator import getitem
 from .compat import text_
 from sqlalchemy.inspection import inspect
 from sqlalchemy.orm.relationships import RelationshipProperty
@@ -65,17 +64,17 @@ normalize_dict = {('string', None): maybe_wrap(text_),
 def jsonify_of(ob, name, type_, registry=jsonify_dict):
     try:
         convert_fn = registry[type_]
-        return convert_fn(getattr(ob, name))
     except KeyError:
         raise Exception("convert {} failure. unknown format {} of {}".format(name, type_, ob))
+    return convert_fn(getattr(ob, name, None))
 
 
 def normalize_of(ob, name, type_, registry=normalize_dict):
     try:
         convert_fn = registry[type_]
-        return convert_fn(ob[name])
     except KeyError:
         raise Exception("convert {} failure. unknown format {} of {}".format(name, type_, ob))
+    return convert_fn(ob.get(name))
 
 
 def attribute_of(ob, name, type_):
@@ -91,7 +90,7 @@ def jsonify(ob, schema, convert=jsonify_of, getter=getattr, registry=jsonify_dic
     return dictify_properties(ob, schema["properties"], convert=convert, getter=getter)
 
 
-def normalize(ob, schema, convert=normalize_of, getter=getitem, registry=normalize_dict):
+def normalize(ob, schema, convert=normalize_of, getter=dict.get, registry=normalize_dict):
     convert = partial(convert, registry=registry)
     return dictify_properties(ob, schema["properties"], convert=convert, getter=getter)
 
@@ -106,7 +105,7 @@ def dictify_properties(ob, properties, convert, getter):
 def _dictify(ob, name, schema, convert, getter):
     type_ = schema["type"]
     if type_ == "array":
-        return [dictify_properties(e, schema["items"], convert, getter) for e in getter(ob, name)]
+        return [dictify_properties(e, schema["items"], convert, getter) for e in getter(ob, name, [])]
     elif type_ == "object":
         return dictify_properties(getter(ob, name), schema["properties"], convert, getter)
     else:
