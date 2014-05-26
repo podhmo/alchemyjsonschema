@@ -23,6 +23,23 @@ def test_it__dictify():
                                 {'pk': None, 'name': 'boo', "created_at": created_at}]}
 
 
+def test_it__dictify2():
+    from alchemyjsonschema import SchemaFactory, AlsoChildrenWalker
+    from alchemyjsonschema.tests.models import Group, User
+    from datetime import datetime
+
+    factory = SchemaFactory(AlsoChildrenWalker)
+    user_schema = factory(User)
+
+    created_at = datetime(2000, 1, 1)
+    group = Group(name="ravenclaw", color="blue", created_at=created_at)
+    user = User(name="foo", created_at=created_at, group=group)
+
+    result = _callFUT(user, user_schema)
+    assert result == {'pk': None, 'name': 'foo', "created_at": created_at,
+                      "group": {'pk': None, 'color': 'blue', 'name': 'ravenclaw', "created_at": created_at}}
+
+
 def test_it__jsonify():
     from alchemyjsonschema import SchemaFactory, AlsoChildrenWalker
     from alchemyjsonschema.tests.models import Group, User
@@ -63,6 +80,19 @@ def test_it__normalize():
                                 {'pk': None, 'name': 'boo', "created_at": created_at}]}
 
 
+def test_it_normalize2():
+    from alchemyjsonschema import SchemaFactory, AlsoChildrenWalker
+    from alchemyjsonschema.tests.models import User
+    from alchemyjsonschema.dictify import normalize_of
+
+    factory = SchemaFactory(AlsoChildrenWalker)
+    user_schema = factory(User)
+    user_dict = {"pk": None, 'name': 'foo', "created_at": None, "group": {"name": "ravenclaw", "color": "blue", "pk": None, "created_at": None}}
+
+    result = _callFUT(user_dict, user_schema, convert=normalize_of, getter=dict.get)
+    assert result == {"pk": None, 'name': 'foo', "created_at": None, "group": {"name": "ravenclaw", "color": "blue", "pk": None, "created_at": None}}
+
+
 def test_it_normalize__partial():
     from alchemyjsonschema import SchemaFactory, AlsoChildrenWalker
     from alchemyjsonschema.tests.models import Group
@@ -75,4 +105,17 @@ def test_it_normalize__partial():
     result = _callFUT(group_dict, group_schema, convert=normalize_of, getter=dict.get)
     assert result == {'pk': None, 'color': 'blue', 'name': 'ravenclaw',
                       "created_at": None, 'users': []}
+
+
+def test_it_normalize__partial2():
+    from alchemyjsonschema import SchemaFactory, AlsoChildrenWalker
+    from alchemyjsonschema.tests.models import User
+    from alchemyjsonschema.dictify import normalize_of
+
+    factory = SchemaFactory(AlsoChildrenWalker)
+    user_schema = factory(User)
+    user_dict = {'name': 'foo'}
+
+    result = _callFUT(user_dict, user_schema, convert=normalize_of, getter=dict.get)
+    assert result == {'pk': None, 'name': 'foo', "created_at": None, 'group': None}
 

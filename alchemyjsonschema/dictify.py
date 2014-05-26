@@ -96,6 +96,8 @@ def normalize(ob, schema, convert=normalize_of, getter=dict.get, registry=normal
 
 
 def dictify_properties(ob, properties, convert, getter):
+    if ob is None:
+        return None
     D = {}
     for k, v in properties.items():
         D[k] = _dictify(ob, k, v, convert, getter)
@@ -103,9 +105,11 @@ def dictify_properties(ob, properties, convert, getter):
 
 
 def _dictify(ob, name, schema, convert, getter):
-    type_ = schema["type"]
+    type_ = schema.get("type")
     if type_ == "array":
         return [dictify_properties(e, schema["items"], convert, getter) for e in getter(ob, name, [])]
+    elif type_ is None:
+        return dictify_properties(getter(ob, name), schema, convert, getter)
     elif type_ == "object":
         return dictify_properties(getter(ob, name), schema["properties"], convert, getter)
     else:
