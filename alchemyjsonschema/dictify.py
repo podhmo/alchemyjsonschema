@@ -10,6 +10,7 @@ from .custom.format import (
     parse_time,  # more strict than isodate
     parse_date   # more strict
 )
+from collections import defaultdict
 from jsonschema import validate
 from . import InvalidStatus
 import pytz
@@ -205,7 +206,7 @@ class ErrorFound(Exception):  # xxx:
 def validate_all(data, validator):
     errors = []
     for e in validator.iter_errors(data):
-        errors.append(dict(name=e.path[0], reason=e.validator))
+        errors.append(e)
     if errors:
         raise ErrorFound(errors)
     return data
