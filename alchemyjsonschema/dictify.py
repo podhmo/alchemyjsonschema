@@ -174,9 +174,15 @@ def objectify_propperties(params, properties, modellookup):
 
 def _objectify(params, name, schema, modellookup):
     type_ = schema.get("type")
+    if params is None:
+        return [] if type_ == "array" else None  # xxx
+
     if type_ == "array":
         return [_objectify_subobject(e, name, schema["items"], modellookup) for e in params.get(name, [])]
     elif type_ is None:  # object
+        sub_params = params.get(name)
+        if sub_params is None:
+            return None
         submodel = modellookup(name)
         result = submodel(**{k: _objectify(params[name], k, schema[k], modellookup) for k in schema if name in params})
         modellookup.pop()
