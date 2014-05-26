@@ -95,3 +95,81 @@ def test_it_complex():
     assert result.group.created_at == created_at2
 
     assert modellookup.name_stack == []
+
+
+def test_it_complex2():
+    from alchemyjsonschema import SchemaFactory, AlsoChildrenWalker
+    from alchemyjsonschema.dictify import ModelLookup
+    import alchemyjsonschema.tests.models as models
+    from datetime import datetime
+
+    factory = SchemaFactory(AlsoChildrenWalker)
+    group_schema = factory(models.Group)
+
+    created_at = datetime(2000, 1, 1)
+    created_at2 = datetime(2001, 1, 1)
+    user_dict = dict(name="foo", created_at=created_at)  # pk is not found
+    group_dict = dict(name="ravenclaw", color="blue", created_at=created_at2, users=[user_dict])
+    modellookup = ModelLookup(models)
+
+    result = _callFUT(group_dict, group_schema, modellookup, strict=False)
+
+    assert isinstance(result, models.Group)
+    assert result.pk is None
+    assert result.name == "ravenclaw"
+    assert result.color == "blue"
+    assert result.created_at == datetime(2001, 1, 1)
+
+    assert isinstance(result.users[0], models.User)
+    assert result.users[0].name == "foo"
+    assert result.users[0].created_at == created_at
+
+    assert modellookup.name_stack == []
+
+
+def test_it_complex__partial():
+    from alchemyjsonschema import SchemaFactory, AlsoChildrenWalker
+    from alchemyjsonschema.dictify import ModelLookup
+    import alchemyjsonschema.tests.models as models
+    from datetime import datetime
+
+    factory = SchemaFactory(AlsoChildrenWalker)
+    user_schema = factory(models.User)
+
+    created_at = datetime(2000, 1, 1)
+    user_dict = dict(name="foo", created_at=created_at)
+    modellookup = ModelLookup(models)
+
+    result = _callFUT(user_dict, user_schema, modellookup, strict=False)
+
+    assert isinstance(result, models.User)
+    assert result.pk is None
+    assert result.name == "foo"
+    assert result.created_at == datetime(2000, 1, 1)
+    assert result.group_id is None
+
+    assert modellookup.name_stack == []
+
+
+def test_it_complex__partial2():
+    from alchemyjsonschema import SchemaFactory, AlsoChildrenWalker
+    from alchemyjsonschema.dictify import ModelLookup
+    import alchemyjsonschema.tests.models as models
+    from datetime import datetime
+
+    factory = SchemaFactory(AlsoChildrenWalker)
+    group_schema = factory(models.Group)
+
+    created_at2 = datetime(2001, 1, 1)
+    group_dict = dict(name="ravenclaw", color="blue", created_at=created_at2)
+    modellookup = ModelLookup(models)
+
+    result = _callFUT(group_dict, group_schema, modellookup, strict=False)
+
+    assert isinstance(result, models.Group)
+    assert result.pk is None
+    assert result.name == "ravenclaw"
+    assert result.color == "blue"
+    assert result.created_at == datetime(2001, 1, 1)
+
+    assert modellookup.name_stack == []
