@@ -15,7 +15,7 @@ date_rx = re.compile("(\d{4})\-(\d{2})\-(\d{2})")
 def parse_date(date_string):
     m = date_rx.match(date_string)
     if m is None:
-        return False
+        return None
 
     groups = m.groups()
 
@@ -51,7 +51,7 @@ def validate_date(date_string):
 def parse_time(time_string):
     m = time_rx.match(time_string)
     if m is None:
-        return False
+        return None
 
     groups = m.groups()
 
