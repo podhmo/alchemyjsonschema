@@ -254,6 +254,14 @@ class SchemaFactory(object):
             schema["required"] = required
         return schema
 
+    def _add_restriction_if_found(self, D, column, itype):
+        for tcls in itype.__mro__:
+            if tcls is TypeEngine:
+                break
+            fn = self.restriction_dict.get(tcls)
+            if fn is not None:
+                fn(column, D)
+
     def _build_properties(self, walker, overrides, depth=None, history=None):
         if depth is not None and depth <= 0:
             return self.container_factory()
@@ -274,12 +282,8 @@ class SchemaFactory(object):
                     sub = {}
                     if type(c.type) != VisitableType:
                         itype, sub["type"] = self.classifier[c.type]
-                        for tcls in itype.__mro__:
-                            if tcls is TypeEngine:
-                                break
-                            fn = self.restriction_dict.get(tcls)
-                            if fn is not None:
-                                fn(c, sub)
+
+                        self._add_restriction_if_found(sub, c, itype)
 
                         if c.doc:
                             sub["description"] = c.doc
