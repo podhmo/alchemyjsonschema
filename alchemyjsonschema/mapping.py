@@ -5,10 +5,12 @@ from .dictify import (
     jsonify,
     dictify,
     normalize,
+    prepare,
     validate_all,
     ModelLookup,
     jsonify_dict,
     normalize_dict,
+    prepare_dict,
     raise_error
 )
 from jsonschema import (
@@ -28,6 +30,7 @@ from . import (
 class DefaultRegistry:
     jsonify = jsonify_dict
     normalize = normalize_dict
+    prepare = prepare_dict
     restriction = default_restriction_dict
     column_to_schema = default_column_to_schema
 
@@ -44,6 +47,9 @@ class Mapping(object):
 
     def jsondict_from_object(self, ob):
         return jsonify(ob, self.schema, registry=self.registry.jsonify)
+
+    def jsondict_from_string_only_dict(self, string_only_dict):
+        return prepare(string_only_dict, self.schema, registry=self.registry.prepare)
 
     def dict_from_jsondict(self, jsondict):
         return normalize(jsondict, self.schema, registry=self.registry.normalize)
