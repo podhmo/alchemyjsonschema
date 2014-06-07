@@ -16,6 +16,12 @@ from . import InvalidStatus
 import pytz
 
 
+class ConvertionError(Exception):
+    def __init__(self, name, message):
+        self.name = name
+        self.message = message
+
+
 def datetime_rfc3339(ob):
     if ob.tzinfo:
         return ob.isoformat()
@@ -66,7 +72,7 @@ def jsonify_of(ob, name, type_, registry=jsonify_dict):
     try:
         convert_fn = registry[type_]
     except KeyError:
-        raise Exception("convert {} failure. unknown format {} of {}".format(name, type_, ob))
+        raise ConvertionError(name, "convert {} failure. unknown format {} of {}".format(name, type_, ob))
     return convert_fn(getattr(ob, name, None))
 
 
@@ -74,8 +80,11 @@ def normalize_of(ob, name, type_, registry=normalize_dict):
     try:
         convert_fn = registry[type_]
     except KeyError:
-        raise Exception("convert {} failure. unknown format {} of {}".format(name, type_, ob))
-    return convert_fn(ob.get(name))
+        raise ConvertionError(name, "convert {} failure. unknown format {} of {}".format(name, type_, ob))
+    try:
+        return convert_fn(ob.get(name))
+    except ValueError as e:
+        raise ConvertionError(name, e.args[0])
 
 
 def attribute_of(ob, name, type_):
@@ -200,7 +209,8 @@ def _objectify_subobject(params, name, schema, modellookup):
 
 
 class ErrorFound(Exception):  # xxx:
-    pass
+    def __init__(self, errors):
+        self.errors = errors
 
 
 def raise_error(data, e):
@@ -212,5 +222,5 @@ def validate_all(data, validator, treat_error=raise_error):
     for e in validator.iter_errors(data):
         errors.append(e)
     if errors:
-        return treat_error(data, e)
+        return treat_error(data, ErrorFound(errors))
     return data
