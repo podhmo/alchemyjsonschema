@@ -67,6 +67,11 @@ normalize_dict = {('string', None): maybe_wrap(text_),
                   ('string', 'date'): maybe_wrap(parse_date),
                   ('xxx', None): raise_error}
 
+prepare_dict = {'string': maybe_wrap(text_),
+                'number': maybe_wrap(float),
+                'integer': maybe_wrap(int),
+                'boolean': maybe_wrap(bool)}
+
 
 def jsonify_of(ob, name, type_, registry=jsonify_dict):
     try:
@@ -92,6 +97,17 @@ def normalize_of(ob, name, type_, registry=normalize_dict):
         raise ConvertionError(name, e.args[0])
 
 
+def prepare_of(ob, name, type_, registry=prepare_dict):
+    val = ob.get(name, marker)
+    if val is marker:
+        return val
+    try:
+        convert_fn = registry[type_[0]]
+        return convert_fn(val)
+    except KeyError:
+        return val
+
+
 def attribute_of(ob, name, type_):
     return getattr(ob, name)
 
@@ -108,6 +124,11 @@ def jsonify(ob, schema, convert=jsonify_of, getter=getattr, registry=jsonify_dic
 def normalize(ob, schema, convert=normalize_of, getter=dict.get, registry=normalize_dict):
     convert = partial(convert, registry=registry)
     return dictify_properties(ob, schema["properties"], convert=convert, getter=getter)
+
+def prepare(ob, schema, convert=prepare_of, getter=dict.get, registry=prepare_dict):
+    convert = partial(convert, registry=registry)
+    return dictify_properties(ob, schema["properties"], convert=convert, getter=getter)
+
 
 
 def dictify_properties(ob, properties, convert, getter, marker=marker):
@@ -172,7 +193,8 @@ class ComposedModule(object):
 # objectify
 def objectify(params, schema, modellookup, strict=True):
     model_class = modellookup(schema["title"])
-    result = model_class(**objectify_propperties(params, schema["properties"], modellookup))
+    params = objectify_propperties(params, schema["properties"], modellookup)
+    result = model_class(**params)
     modellookup.pop()
     if strict:
         for k in schema["required"]:
@@ -194,7 +216,9 @@ def _objectify(params, name, schema, modellookup):
     if params is None:
         return [] if type_ == "array" else None  # xxx
 
-    if type_ == "array":
+    if name not in params:
+        return None
+    elif type_ == "array":
         return [_objectify_subobject(e, name, schema["items"], modellookup) for e in params.get(name, [])]
     elif type_ is None:  # object
         sub_params = params.get(name)

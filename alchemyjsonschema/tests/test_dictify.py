@@ -118,3 +118,21 @@ def test_it_normalize__partial2():
     result = _callFUT(user_dict, user_schema, convert=normalize_of, getter=dict.get)
     assert result == {'name': 'foo', 'group': None}
 
+
+def test_it__prepare():
+    from alchemyjsonschema import SchemaFactory, AlsoChildrenWalker
+    from alchemyjsonschema.tests.models import Group
+    from alchemyjsonschema.dictify import prepare_of
+
+    factory = SchemaFactory(AlsoChildrenWalker)
+    group_schema = factory(Group)
+    group_dict = {'name': 'ravenclaw', 'created_at': '2000-01-01T00:00:00+00:00', 'color': 'blue', 'pk': 1,
+                  'users': [{'name': 'foo', 'created_at': '2000-01-01T00:00:00+00:00', 'pk': 12},
+                            {'name': 'boo', 'created_at': '2000-01-01T00:00:00+00:00', 'pk': 13}]}
+
+    result = _callFUT(group_dict, group_schema, convert=prepare_of, getter=dict.get)
+    assert result == {'name': 'ravenclaw', 'created_at': '2000-01-01T00:00:00+00:00',
+                      'color': 'blue', 'pk': 1,
+                      'users': [{'name': 'foo', 'created_at': '2000-01-01T00:00:00+00:00', 'pk': 12},
+                                {'name': 'boo', 'created_at': '2000-01-01T00:00:00+00:00', 'pk': 13}]}
+
