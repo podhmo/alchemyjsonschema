@@ -100,11 +100,10 @@ def test_it_normalize__partial():
 
     factory = SchemaFactory(AlsoChildrenWalker)
     group_schema = factory(Group)
-    group_dict = {'name': 'ravenclaw', 'color': 'blue', 'pk': None}
+    group_dict = {'name': 'ravenclaw', 'color': 'blue'}
 
     result = _callFUT(group_dict, group_schema, convert=normalize_of, getter=dict.get)
-    assert result == {'pk': None, 'color': 'blue', 'name': 'ravenclaw',
-                      "created_at": None, 'users': []}
+    assert result == {'color': 'blue', 'name': 'ravenclaw', 'users': []}
 
 
 def test_it_normalize__partial2():
@@ -117,5 +116,5 @@ def test_it_normalize__partial2():
     user_dict = {'name': 'foo'}
 
     result = _callFUT(user_dict, user_schema, convert=normalize_of, getter=dict.get)
-    assert result == {'pk': None, 'name': 'foo', "created_at": None, 'group': None}
+    assert result == {'name': 'foo', 'group': None}
 

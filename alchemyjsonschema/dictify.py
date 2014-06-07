@@ -75,6 +75,8 @@ def jsonify_of(ob, name, type_, registry=jsonify_dict):
         raise ConvertionError(name, "convert {} failure. unknown format {} of {}".format(name, type_, ob))
     return convert_fn(getattr(ob, name, None))
 
+marker = object()
+
 
 def normalize_of(ob, name, type_, registry=normalize_dict):
     try:
@@ -82,7 +84,10 @@ def normalize_of(ob, name, type_, registry=normalize_dict):
     except KeyError:
         raise ConvertionError(name, "convert {} failure. unknown format {} of {}".format(name, type_, ob))
     try:
-        return convert_fn(ob.get(name))
+        val = ob.get(name, marker)
+        if val is marker:
+            return val
+        return convert_fn(val)
     except ValueError as e:
         raise ConvertionError(name, e.args[0])
 
@@ -105,12 +110,14 @@ def normalize(ob, schema, convert=normalize_of, getter=dict.get, registry=normal
     return dictify_properties(ob, schema["properties"], convert=convert, getter=getter)
 
 
-def dictify_properties(ob, properties, convert, getter):
+def dictify_properties(ob, properties, convert, getter, marker=marker):
     if ob is None:
         return None
     D = {}
     for k, v in properties.items():
-        D[k] = _dictify(ob, k, v, convert, getter)
+        val = _dictify(ob, k, v, convert, getter)
+        if val is not marker:
+            D[k] = val
     return D
 
 
