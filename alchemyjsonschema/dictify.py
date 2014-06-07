@@ -125,10 +125,10 @@ def normalize(ob, schema, convert=normalize_of, getter=dict.get, registry=normal
     convert = partial(convert, registry=registry)
     return dictify_properties(ob, schema["properties"], convert=convert, getter=getter)
 
+
 def prepare(ob, schema, convert=prepare_of, getter=dict.get, registry=prepare_dict):
     convert = partial(convert, registry=registry)
     return dictify_properties(ob, schema["properties"], convert=convert, getter=getter)
-
 
 
 def dictify_properties(ob, properties, convert, getter, marker=marker):
@@ -216,10 +216,10 @@ def _objectify(params, name, schema, modellookup):
     if params is None:
         return [] if type_ == "array" else None  # xxx
 
-    if name not in params:
-        return None
-    elif type_ == "array":
+    if type_ == "array":
         return [_objectify_subobject(e, name, schema["items"], modellookup) for e in params.get(name, [])]
+    elif name not in params:
+        return None
     elif type_ is None:  # object
         sub_params = params.get(name)
         if sub_params is None:
