@@ -203,10 +203,14 @@ class ErrorFound(Exception):  # xxx:
     pass
 
 
-def validate_all(data, validator):
+def raise_error(data, e):
+    raise e
+
+
+def validate_all(data, validator, treat_error=raise_error):
     errors = []
     for e in validator.iter_errors(data):
         errors.append(e)
     if errors:
-        raise ErrorFound(errors)
+        return treat_error(data, e)
     return data

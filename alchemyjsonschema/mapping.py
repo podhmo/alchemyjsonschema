@@ -9,6 +9,7 @@ from .dictify import (
     ModelLookup,
     jsonify_dict,
     normalize_dict,
+    raise_error
 )
 from jsonschema import (
     validate,
@@ -32,13 +33,14 @@ class DefaultRegistry:
 
 
 class Mapping(object):
-    def __init__(self, validator, model, modellookup, registry=DefaultRegistry):
+    def __init__(self, validator, model, modellookup, registry=DefaultRegistry, treat_error=raise_error):
         self.validator = validator
         self.format_checker = validator.format_checker
         self.schema = validator.schema
         self.model = model
         self.modellookup = modellookup
         self.registry = registry
+        self.treat_error = treat_error
 
     def jsondict_from_object(self, ob):
         return jsonify(ob, self.schema, registry=self.registry.jsonify)
@@ -56,7 +58,7 @@ class Mapping(object):
         return validate(jsondict, self.schema, format_checker=self.format_checker)
 
     def validate_all_jsondict(self, jsondict):
-        return validate_all(jsondict, self.validator)
+        return validate_all(jsondict, self.validator, self.treat_error)
 
 
 class MappingFactory(object):
