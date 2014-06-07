@@ -8,7 +8,7 @@ from ..compat import string_types
 """
 this is custom format
 """
-time_rx = re.compile("(\d{2}):(\d{2}):(\d{2})(\.\d+)?(Z|([+\-])(\d{2}):(\d{2}))")
+time_rx = re.compile("(\d{2}):(\d{2}):(\d{2})(\.\d+)?(Z|([+\-])(\d{2}):(\d{2}))?")
 date_rx = re.compile("(\d{4})\-(\d{2})\-(\d{2})")
 
 
@@ -56,7 +56,7 @@ def parse_time(time_string):
     groups = m.groups()
 
     hour, minute, second = [int(x) for x in groups[:3]]
-    if groups[4] != "Z":
+    if groups[4] is not None and groups[4] != "Z":
         return time(hour, minute, second, int(groups(3)))
     return time(hour, minute, second)
 
@@ -73,7 +73,7 @@ def validate_time(time_string):
         # forbid leap seconds :-(. See README
         return False
 
-    if groups[4] != "Z":
+    if groups[4] is not None and groups[4] != "Z":
         (offset_sign, offset_hours, offset_mins) = groups[5:]
         if not (0 <= int(offset_hours) <= 23 and 0 <= int(offset_mins) <= 59):
             return False
