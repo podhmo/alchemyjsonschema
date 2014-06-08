@@ -106,7 +106,8 @@ def prepare_of(ob, name, type_, registry=prepare_dict):
         return convert_fn(val)
     except KeyError:
         return val
-
+    except ValueError as e:
+        raise ConvertionError(name, e.args[0])
 
 def attribute_of(ob, name, type_):
     return getattr(ob, name)
