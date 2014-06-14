@@ -66,7 +66,10 @@ setup(name='alchemyjsonschema',
           },
       tests_require = tests_require,
       cmdclass = {'test': PyTest},
-      entry_points = """      """
+      entry_points = """
+      [console_scripts]
+      alchemyjsonschema = alchemyjsonschema.command:main
+      """
       )
 
 
