@@ -193,6 +193,14 @@ class ComposedModule(object):
 
 
 # objectify
+def _objectify_subobject(params, name, schema, modellookup):
+    sub_model = modellookup(name)
+    sub_params = objectify_propperties(params, schema, modellookup)
+    sub = sub_model(**sub_params)
+    modellookup.pop()
+    return sub
+
+
 def objectify(params, schema, modellookup, strict=True):
     model_class = modellookup(schema["title"])
     params = objectify_propperties(params, schema["properties"], modellookup)
@@ -219,26 +227,34 @@ def _objectify(params, name, schema, modellookup):
         return [] if type_ == "array" else None  # xxx
 
     if type_ == "array":
-        return [_objectify_subobject(e, name, schema["items"], modellookup) for e in params.get(name, [])]
+        sub_schema = schema["items"]
+        return [_objectify_subobject(e, name, sub_schema, modellookup) for e in params.get(name, [])]
     elif name not in params:
         return None
     elif type_ is None:  # object
         sub_params = params.get(name)
         if sub_params is None:
             return None
-        submodel = modellookup(name)
-        result = submodel(**{k: _objectify(params[name], k, schema[k], modellookup) for k in schema if name in params})
-        modellookup.pop()
-        return result
+        return _objectify_subobject(params[name], name, schema, modellookup)
     else:
         return params.get(name)
 
 
-def _objectify_subobject(params, name, schema, modellookup):
-    submodel = modellookup(name)
-    result = submodel(**{k: _objectify(params, k, v, modellookup) for k, v in schema.items()})
-    modellookup.pop()
-    return result
+# # apply_changed
+# def apply_subchanged(ob, params, name, schema, modellookup):
+#     for k, v in params.items():
+#         if v is not None:
+#             setattr(ob, k, v)
+
+
+# def apply_changed(ob, schema, params, modellookup):
+#     params = objectify_propperties(params, schema["properties"], modellookup, _apply_subchanged)
+#     for k, v in params.items():
+#         if v is not None:
+#             setattr(ob, k, v)
+#     modellookup.pop()
+#     assert modellookup.name_stack == []
+#     return ob
 
 
 class ErrorFound(Exception):  # xxx:

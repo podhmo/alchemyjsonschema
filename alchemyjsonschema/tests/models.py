@@ -28,3 +28,28 @@ class User(Base):
     group_id = sa.Column(sa.Integer, sa.ForeignKey(Group.pk), nullable=False)
     group = orm.relationship(Group, uselist=False, backref="users")
     created_at = sa.Column(sa.DateTime, nullable=True)
+
+
+class A0(Base):
+    __tablename__ = "A0"
+
+    name = sa.Column(sa.String(255), default="", nullable=False)
+    pk = sa.Column(sa.Integer, primary_key=True, doc="primary key")
+
+
+class A1(Base):
+    __tablename__ = "A1"
+
+    name = sa.Column(sa.String(255), default="", nullable=False)
+    pk = sa.Column(sa.Integer, primary_key=True, doc="primary key1")
+    parent_id = sa.Column(sa.Integer, sa.ForeignKey(A0.pk), nullable=False)
+    parent = orm.relationship(A0, uselist=False, backref="children")
+
+
+class A2(Base):
+    __tablename__ = "A2"
+
+    name = sa.Column(sa.String(255), default="", nullable=False)
+    pk = sa.Column(sa.Integer, primary_key=True, doc="primary key2")
+    parent_id = sa.Column(sa.Integer, sa.ForeignKey(A1.pk), nullable=False)
+    parent = orm.relationship(A1, uselist=False, backref="children")
