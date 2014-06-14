@@ -271,7 +271,7 @@ def apply_changes_propperties(ob, params, properties, modellookup):
 
 
 def _get_primary_keys_from_object(ob):
-    return tuple(sorted(col.name for col in ob.__mapper__.primary_key))
+    return tuple(sorted(col.name for col in inspect(ob).mapper.primary_key))
 
 
 def _get_primary_keys_from_params(sub_params, primary_keys):
