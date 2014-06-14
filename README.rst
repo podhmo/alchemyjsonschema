@@ -117,6 +117,32 @@ help
       -h, --help            show this help message and exit
       --walker {onlyone,single,alsochildren}
 
+
+target models
+
+.. code:: python
+
+    class Group(Base):
+        __tablename__ = "Group"
+        query = Session.query_property()
+
+        pk = sa.Column(sa.Integer, primary_key=True, doc="primary key")
+        name = sa.Column(sa.String(255), default="", nullable=False)
+        color = sa.Column(sa.Enum("red", "green", "yellow", "blue"))
+        created_at = sa.Column(sa.DateTime, nullable=True)
+
+
+    class User(Base):
+        __tablename__ = "User"
+        query = Session.query_property()
+
+        pk = sa.Column(sa.Integer, primary_key=True, doc="primary key")
+        name = sa.Column(sa.String(255), default="", nullable=False)
+        group_id = sa.Column(sa.Integer, sa.ForeignKey(Group.pk), nullable=False)
+        group = orm.relationship(Group, uselist=False, backref="users")
+        created_at = sa.Column(sa.DateTime, nullable=True)
+
+
 dump schema (commandline)
 
 .. code:: bash
