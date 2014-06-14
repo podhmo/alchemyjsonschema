@@ -59,7 +59,8 @@ default_column_to_schema = {
 
 # restriction
 def string_max_length(column, sub):
-    sub["maxLength"] = column.type.length
+    if column.type.length is not None:
+        sub["maxLength"] = column.type.length
 
 
 def enum_one_of(column, sub):
