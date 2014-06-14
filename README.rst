@@ -97,3 +97,78 @@ alchemyjsonschema
     'title': 'Group',
     'type': 'object'}
    """
+
+has alchemyjsonschema command
+----------------------------------------
+
+help
+
+.. code:: bash
+
+    $ alchemyjsonschema -h
+    usage: alchemyjsonschema [-h] [--walker {onlyone,single,alsochildren}]
+                             program model
+
+    positional arguments:
+      program
+      model
+
+    optional arguments:
+      -h, --help            show this help message and exit
+      --walker {onlyone,single,alsochildren}
+
+dump schema (commandline)
+
+.. code:: bash
+
+    $ alchemyjsonschema alchemyjsonschema.tests.models:Group --walker alsochildren
+
+    {
+      "title": "Group", 
+      "required": [
+        "pk", 
+        "name"
+      ], 
+      "type": "object", 
+      "properties": {
+        "pk": {
+          "type": "integer", 
+          "description": "primary key"
+        }, 
+        "name": {
+          "maxLength": 255, 
+          "type": "string"
+        }, 
+        "color": {
+          "maxLength": 6, 
+          "type": "string", 
+          "enum": [
+            "red", 
+            "green", 
+            "yellow", 
+            "blue"
+          ]
+        }, 
+        "created_at": {
+          "type": "string", 
+          "format": "date-time"
+        }, 
+        "users": {
+          "type": "array", 
+          "items": {
+            "pk": {
+              "type": "integer", 
+              "description": "primary key"
+            }, 
+            "name": {
+              "maxLength": 255, 
+              "type": "string"
+            }, 
+            "created_at": {
+              "type": "string", 
+              "format": "date-time"
+            }
+          }
+        }
+      }
+    }
