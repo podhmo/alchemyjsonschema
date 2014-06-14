@@ -10,7 +10,7 @@ from .custom.format import (
     parse_time,  # more strict than isodate
     parse_date   # more strict
 )
-from collections import defaultdict
+from collections import OrderedDict
 from jsonschema import validate
 from . import InvalidStatus
 import pytz
@@ -240,21 +240,95 @@ def _objectify(params, name, schema, modellookup):
         return params.get(name)
 
 
-# # apply_changed
-# def apply_subchanged(ob, params, name, schema, modellookup):
-#     for k, v in params.items():
-#         if v is not None:
-#             setattr(ob, k, v)
+# apply_changes
+def _apply_changes_subobject(parent, params, name, schema, modellookup):
+    if params is None:
+        return None
+    sub = getattr(parent, name, None)
+    if sub is None:
+        return _objectify_subobject(params, name, schema, modellookup)
+    else:
+        sub_model = modellookup(name)
+        assert sub.__class__ == sub_model
+        sub = apply_changes_propperties(sub, params, schema, modellookup)
+        modellookup.pop()
+        return sub
 
 
-# def apply_changed(ob, schema, params, modellookup):
-#     params = objectify_propperties(params, schema["properties"], modellookup, _apply_subchanged)
-#     for k, v in params.items():
-#         if v is not None:
-#             setattr(ob, k, v)
-#     modellookup.pop()
-#     assert modellookup.name_stack == []
-#     return ob
+def apply_changes(ob, params, schema, modellookup):
+    model_class = modellookup(schema["title"])
+    params = apply_changes_propperties(ob, params, schema["properties"], modellookup)
+    assert model_class == ob.__class__
+    modellookup.pop()
+    assert modellookup.name_stack == []
+    return ob
+
+
+def apply_changes_propperties(ob, params, properties, modellookup):
+    for k, schema in properties.items():
+        setattr(ob, k, _apply_changes(ob, params, k, schema, modellookup))
+    return ob
+
+
+def _get_primary_keys_from_object(ob):
+    return tuple(sorted(col.name for col in ob.__mapper__.primary_key))
+
+
+def _get_primary_keys_from_params(sub_params, primary_keys):
+    return tuple(sorted(sub_params.get(k) for k in primary_keys))
+
+
+def subobject_iterate(ob, params, name):
+    cache = OrderedDict()
+    used_children = set()
+
+    primary_keys = None
+
+    for sub in getattr(ob, name):
+        if primary_keys is None:
+            primary_keys = _get_primary_keys_from_object(ob)
+        cache[primary_keys] = sub
+
+    for sub_params in params.get(name, []):
+        keys = _get_primary_keys_from_params(sub_params, primary_keys)
+        if keys in cache:
+            sub = cache[keys]
+            yield "update", sub, sub_params
+            used_children.add(sub)
+        else:
+            yield "create", None, sub_params
+
+    for sub in getattr(ob, name):
+        if sub not in used_children:
+            yield "delete", sub, None
+
+
+def _apply_changes(ob, params, name, schema, modellookup):
+    type_ = schema.get("type")
+    if params is None:
+        return [] if type_ == "array" else None  # xxx
+
+    if type_ == "array":
+        sub_schema = schema["items"]
+        access = getattr(ob, name)
+        for ac, sub, sub_params in list(subobject_iterate(ob, params, name)):
+            if ac == "create":
+                access.append(_objectify_subobject(sub_params, name, sub_schema, modellookup))
+            elif ac == "update":
+                for k, v in sub_params.items():  # xxx:
+                    setattr(sub, k, v)
+            elif ac == "delete":
+                access.remove(sub)
+        return getattr(ob, name)
+    elif name not in params:
+        return None
+    elif type_ is None:  # object
+        sub_params = params.get(name)
+        if sub_params is None:
+            return None
+        return _apply_changes_subobject(ob, params[name], name, schema, modellookup)
+    else:
+        return params.get(name)
 
 
 class ErrorFound(Exception):  # xxx:
