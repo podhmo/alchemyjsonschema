@@ -53,3 +53,11 @@ class A2(Base):
     pk = sa.Column(sa.Integer, primary_key=True, doc="primary key2")
     parent_id = sa.Column(sa.Integer, sa.ForeignKey(A1.pk), nullable=False)
     parent = orm.relationship(A1, uselist=False, backref="children")
+
+
+class MyModel(Base):
+    """regression. case: nullable=False column is not found."""
+    __tablename__ = 'models'
+    id = sa.Column(sa.Integer, primary_key=True)
+    name = sa.Column(sa.Text)
+    value = sa.Column(sa.Integer)

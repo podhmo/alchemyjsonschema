@@ -207,7 +207,7 @@ def objectify(params, schema, modellookup, strict=True):
     result = model_class(**params)
     modellookup.pop()
     if strict:
-        for k in schema["required"]:
+        for k in schema.get("required", []):
             if getattr(result, k) is None:
                 raise InvalidStatus("{}.{} is None. this is required.".format(model_class, k))
     assert modellookup.name_stack == []
