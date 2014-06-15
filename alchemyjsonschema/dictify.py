@@ -124,26 +124,26 @@ class DictWalker(object):
 
     def __call__(self, ob, schema):
         self.schema = schema
-        return self.dictify_properties(ob, self.get_properties(schema))
+        return self.fold_properties(ob, self.get_properties(schema))
 
-    def dictify_properties(self, ob, properties):
+    def fold_properties(self, ob, properties):
         if ob is None:
             return None
         D = {}
         for k, v in properties.items():
-            val = self._dictify(ob, k, v)
+            val = self.on_property(ob, k, v)
             if val is not self.marker:
                 D[k] = val
         return D
 
-    def _dictify(self, ob, name, schema):
+    def on_property(self, ob, name, schema):
         type_ = schema.get("type")
         if type_ == "array":
-            return [self.dictify_properties(e, schema["items"]) for e in self.getter(ob, name, [])]
+            return [self.fold_properties(e, schema["items"]) for e in self.getter(ob, name, [])]
         elif type_ is None:
-            return self.dictify_properties(self.getter(ob, name), self.get_properties(schema))
+            return self.fold_properties(self.getter(ob, name), self.get_properties(schema))
         elif type_ == "object":
-            return self.dictify_properties(self.getter(ob, name), self.get_properties(schema))
+            return self.fold_properties(self.getter(ob, name), self.get_properties(schema))
         else:
             return self.convert(ob, name, (type_, schema.get("format")), self.registry)
 
@@ -226,49 +226,46 @@ class CreateObjectWalker(object):
         self.strict = strict
 
     def __call__(self, params, schema):
-        model_class = self.modellookup(schema["title"])
-        params = self.objectify_propperties(params, self.get_properties(schema))
-        result = model_class(**params)
-        self.modellookup.pop()
-        if self.strict:
-            for k in schema.get("required", []):
-                if getattr(result, k) is None:
-                    raise InvalidStatus("{}.{} is None. this is required.".format(model_class, k))
+        result = self._create_subobject(params, schema["title"], schema)
         assert self.modellookup.name_stack == []
         return result
 
-    def objectify_propperties(self, params, properties):
+    def fold_properties(self, params, properties):
         D = {}
         for k, schema in properties.items():
-            D[k] = self._objectify(params, k, schema)
+            D[k] = self.on_property(params, k, schema)
         return D
 
-    def _objectify(self, params, name, schema):
+    def on_property(self, params, name, schema):
         type_ = schema.get("type")
         if params is None:
             return [] if type_ == "array" else None  # xxx
 
         if type_ == "array":
             sub_schema = schema["items"]
-            return [self._objectify_subobject(e, name, sub_schema) for e in params.get(name, [])]
+            return [self._create_subobject(e, name, sub_schema) for e in params.get(name, [])]
         elif name not in params:
             return None
         elif type_ == "object":
             sub_params = params.get[name]
-            return self._objectify_subobject(sub_params, name, schema)
+            return self._create_subobject(sub_params, name, schema)
         elif type_ is None:  # object
             sub_params = params.get(name)
             if sub_params is None:
                 return None
-            return self._objectify_subobject(sub_params, name, schema)
+            return self._create_subobject(sub_params, name, schema)
         else:
             return params.get(name)
 
-    def _objectify_subobject(self, params, name, schema):
+    def _create_subobject(self, params, name, schema):
         sub_model = self.modellookup(name)
-        sub_params = self.objectify_propperties(params, self.get_properties(schema))
+        sub_params = self.fold_properties(params, self.get_properties(schema))
         sub = sub_model(**sub_params)
         self.modellookup.pop()
+        if self.strict:
+            for k in schema.get("required", []):
+                if getattr(sub, k) is None:
+                    raise InvalidStatus("{}.{} is None. this is required.".format(sub_model, k))
         return sub
 
     def get_properties(self, schema):
@@ -294,7 +291,7 @@ class UpdateObjectWalker(object):
     def __call__(self, ob, params, schema):
         self.schema = schema
         model_class = self.modellookup(schema["title"])
-        params = self.apply_changes_propperties(ob, params, self.get_properties(schema))
+        params = self.fold_properties(ob, params, self.get_properties(schema))
         assert model_class == ob.__class__
         self.modellookup.pop()
         assert self.modellookup.name_stack == []
@@ -303,12 +300,12 @@ class UpdateObjectWalker(object):
     def get_properties(self, schema):
         return get_properties(schema, self.schema)
 
-    def apply_changes_propperties(self, ob, params, properties):
+    def fold_properties(self, ob, params, properties):
         for k, schema in properties.items():
-            setattr(ob, k, self._apply_changes(ob, params, k, schema))
+            setattr(ob, k, self.on_property(ob, params, k, schema))
         return ob
 
-    def _apply_changes(self, ob, params, name, schema):
+    def on_property(self, ob, params, name, schema):
         type_ = schema.get("type")
         if params is None:
             return [] if type_ == "array" else None  # xxx
@@ -318,7 +315,7 @@ class UpdateObjectWalker(object):
             access = getattr(ob, name)
             for ac, sub, sub_params in list(subobject_iterate(ob, params, name)):
                 if ac == "create":
-                    access.append(self.create_walker._objectify_subobject(sub_params, name, sub_schema))
+                    access.append(self.create_walker._create_subobject(sub_params, name, sub_schema))
                 elif ac == "update":
                     for k, v in sub_params.items():  # xxx:
                         setattr(sub, k, v)
@@ -331,20 +328,20 @@ class UpdateObjectWalker(object):
             sub_params = params.get(name)
             if sub_params is None:
                 return None
-            return self._apply_changes_subobject(ob, params[name], name, schema)
+            return self._update_subobject(ob, params[name], name, schema)
         else:
             return params.get(name)
 
-    def _apply_changes_subobject(self, parent, params, name, schema):
+    def _update_subobject(self, parent, params, name, schema):
         if params is None:
             return None
         sub = getattr(parent, name, None)
         if sub is None:
-            return self.create_walker._objectify_subobject(params, name, schema)
+            return self.create_walker._create_subobject(params, name, schema)
         else:
             sub_model = self.modellookup(name)
             assert sub.__class__ == sub_model
-            sub = self.apply_changes_propperties(sub, params, schema)
+            sub = self.fold_properties(sub, params, schema)
             self.modellookup.pop()
             return sub
 
