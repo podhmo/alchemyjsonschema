@@ -43,9 +43,8 @@ def run(model, walker, depth=None):
     print(json.dumps(schema, indent=2, ensure_ascii=False))
 
 
-def main(sys_args=sys.argv):
+def main(sys_args=sys.argv[1:]):
     parser = argparse.ArgumentParser()
-    parser.add_argument("program")
     parser.add_argument("model")
     parser.add_argument("--walker", choices=["noforeignkey", "foreignkey", "structual", "control"], default="structual")
     parser.add_argument("--depth", default=None, type=int)
@@ -58,7 +57,4 @@ def main(sys_args=sys.argv):
         decisions = {k.strip(): "relationship" for k in args.decision_relationship.split(" ")}
         decisions.update({k.strip(): "foreignkey" for k in args.decision_foreignkey.split(" ")})
         walker = walker(decisions)
-        depth = 2
-    else:
-        depth = args.depth
-    return run(model, walker, depth=depth)
+    return run(model, walker, depth=args.depth)
