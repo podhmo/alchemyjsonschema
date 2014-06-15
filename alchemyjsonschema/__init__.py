@@ -117,7 +117,7 @@ class BaseModelWalker(object):
             if set(includes).intersection(excludes):
                 raise InvalidStatus("Conflict includes={}, exclude={}".format(includes, excludes))
 
-    def clone(self, mapper, includes, excludes, history):
+    def clone(self, name, mapper, includes, excludes, history):
         return self.__class__(mapper, includes, excludes, history)
 
 # mapper.column_attrs and mapper.attrs is not ordered. define our custom iterate function `iterate'
@@ -203,7 +203,7 @@ class HandControlledWalker(BaseModelWalker):
 
     def treat_relationship(self, prop):
         decision = self.decisions[prop.key]
-        if decision == "relation":
+        if decision == "relationship":
             yield prop
         elif decision == "foreignkey":
             for c in prop.local_columns:
@@ -212,8 +212,9 @@ class HandControlledWalker(BaseModelWalker):
         else:
             raise Exception(decision)
 
-    def clone(self, mapper, includes, excludes, history):
-        return self.__class__(mapper, includes, excludes, history, self.desicions)  # xxx
+    def clone(self, name, mapper, includes, excludes, history):
+        decisions = get_children(name, self.decisions)
+        return self.__class__(mapper, includes, excludes, history, decisions)  # xxx
 
 
 def get_children(name, params, splitter=".", default=None):  # todo: rename
@@ -265,7 +266,7 @@ class ChildFactory(object):
         excludes.extend(self.default_excludes(prop))
         includes = get_children(name, walker.includes, splitter=self.splitter)
 
-        return walker.clone(prop.mapper, includes=includes, excludes=excludes, history=history)
+        return walker.clone(name, prop.mapper, includes=includes, excludes=excludes, history=history)
 
     def child_schema(self, prop, schema_factory, walker, overrides, depth, history):
         subschema = schema_factory._build_properties(walker, overrides, depth=(depth and depth - 1), history=history)
