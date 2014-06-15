@@ -68,7 +68,7 @@ def test_properties__include_OnetoMany_relation():
 
     assert "required" in result
     assert list(sorted(result["properties"])) == ["group", "name", "pk"]
-    assert result["properties"]["group"] == {"type": "object", "$ref": "#/definitions/Group"}
+    assert result["properties"]["group"] == {"$ref": "#/definitions/Group"}
 
 
 def test_properties__include_OnetoMany_relation2():

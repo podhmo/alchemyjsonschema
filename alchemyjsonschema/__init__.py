@@ -365,7 +365,7 @@ class SchemaFactory(object):
         if "definitions" not in root_schema:
             root_schema["definitions"] = {}
         if val["type"] == "object":
-            current_schema[prop.key] = {"type": "object", "$ref": "#/definitions/{}".format(clsname)}
+            current_schema[prop.key] = {"$ref": "#/definitions/{}".format(clsname)}
             root_schema["definitions"][clsname] = val
         else:  # array
             current_schema[prop.key] = {"type": "array", "items": {"$ref": "#/definitions/{}".format(clsname)}}
