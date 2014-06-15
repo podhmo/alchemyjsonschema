@@ -6,6 +6,7 @@ from .dictify import (
     dictify,
     normalize,
     prepare,
+    apply_changes,
     validate_all,
     ModelLookup,
     jsonify_dict,
@@ -65,6 +66,9 @@ class Mapping(object):
 
     def validate_all_jsondict(self, jsondict):
         return validate_all(jsondict, self.validator, self.treat_error)
+
+    def apply_changes_from_dict(self, ob, params):
+        return apply_changes(ob, params, self.schema, self.modellookup)
 
 
 class MappingFactory(object):

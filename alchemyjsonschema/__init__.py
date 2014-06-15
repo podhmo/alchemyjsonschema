@@ -117,6 +117,9 @@ class BaseModelWalker(object):
             if set(includes).intersection(excludes):
                 raise InvalidStatus("Conflict includes={}, exclude={}".format(includes, excludes))
 
+    def clone(self, mapper, includes, excludes, history):
+        return self.__class__(mapper, includes, excludes, history)
+
 # mapper.column_attrs and mapper.attrs is not ordered. define our custom iterate function `iterate'
 
 
@@ -130,6 +133,7 @@ class SingleModelWalker(BaseModelWalker):
             if self.includes is None or prop.key in self.includes:
                 if self.excludes is None or prop.key not in self.excludes:
                     yield prop
+SeeForeignKeyWalker = SingleModelWalker
 
 
 class OneModelOnlyWalker(BaseModelWalker):
@@ -143,6 +147,7 @@ class OneModelOnlyWalker(BaseModelWalker):
                 if self.excludes is None or prop.key not in self.excludes:
                     if not any(c.foreign_keys for c in getattr(prop, "columns", Empty)):
                         yield prop
+NoForeignKeyWalker = OneModelOnlyWalker
 
 
 class AlsoChildrenWalker(BaseModelWalker):
@@ -162,7 +167,53 @@ class AlsoChildrenWalker(BaseModelWalker):
                             if not any(c.foreign_keys for c in getattr(prop, "columns", Empty)):
                                 yield prop
 
-pop_marker = object()
+StructuralWalker = AlsoChildrenWalker
+
+
+class HandControlledWalkerFactory(object):
+    def __init__(self, decisions):
+        self.decisions = decisions
+
+    def __call__(self, model, includes=None, excludes=None, history=None):
+        return HandControlledWalker(model, includes, excludes, history, decisions=self.decisions)
+
+
+class HandControlledWalker(BaseModelWalker):
+    def __init__(self, model, includes=None, excludes=None, history=None, decisions=None):
+        super(HandControlledWalker, self).__init__(model, includes, excludes, history)
+        self.decisions = decisions
+        self.walking = []
+
+    def iterate(self):
+        # self.mapper.attrs
+        for c in self.mapper.local_table.columns:
+            yield self.mapper._props[c.name]  # danger!! not immutable
+        for prop in self.mapper.relationships:
+            for prop in self.treat_relationship(prop):
+                yield prop
+
+    def walk(self):
+        for prop in self.iterate():
+            if isinstance(prop, (ColumnProperty, RelationshipProperty)):
+                if self.includes is None or prop.key in self.includes:
+                    if self.excludes is None or prop.key not in self.excludes:
+                        if prop not in self.history:
+                            if prop.key in self.walking or (not any(c.foreign_keys for c in getattr(prop, "columns", Empty))):
+                                yield prop
+
+    def treat_relationship(self, prop):
+        decision = self.decisions[prop.key]
+        if decision == "relation":
+            yield prop
+        elif decision == "foreignkey":
+            for c in prop.local_columns:
+                self.walking.append(c.name)
+                yield self.mapper._props[c.name]
+        else:
+            raise Exception(decision)
+
+    def clone(self, mapper, includes, excludes, history):
+        return self.__class__(mapper, includes, excludes, history, self.desicions)  # xxx
 
 
 def get_children(name, params, splitter=".", default=None):  # todo: rename
@@ -173,6 +224,9 @@ def get_children(name, params, splitter=".", default=None):  # todo: rename
         return [e.split(splitter, 1)[0] for e in params if e.startswith(prefix)]
     else:
         return default
+
+
+pop_marker = object()
 
 
 class CollectionForOverrides(object):
@@ -211,7 +265,7 @@ class ChildFactory(object):
         excludes.extend(self.default_excludes(prop))
         includes = get_children(name, walker.includes, splitter=self.splitter)
 
-        return walker.__class__(prop.mapper, includes=includes, excludes=excludes, history=history)
+        return walker.clone(prop.mapper, includes=includes, excludes=excludes, history=history)
 
     def child_schema(self, prop, schema_factory, walker, overrides, depth, history):
         subschema = schema_factory._build_properties(walker, overrides, depth=(depth and depth - 1), history=history)
