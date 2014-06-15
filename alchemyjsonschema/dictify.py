@@ -120,9 +120,11 @@ class DictWalker(object):
         self.getter = getter
         self.registry = registry
         self.marker = marker
+        self.schema = None
 
     def __call__(self, ob, schema):
-        return self.dictify_properties(ob, schema["properties"])
+        self.schema = schema
+        return self.dictify_properties(ob, self.get_properties(schema))
 
     def dictify_properties(self, ob, properties):
         if ob is None:
@@ -139,11 +141,25 @@ class DictWalker(object):
         if type_ == "array":
             return [self.dictify_properties(e, schema["items"]) for e in self.getter(ob, name, [])]
         elif type_ is None:
-            return self.dictify_properties(self.getter(ob, name), schema)
+            return self.dictify_properties(self.getter(ob, name), self.get_properties(schema))
         elif type_ == "object":
-            return self.dictify_properties(self.getter(ob, name), schema["properties"])
+            return self.dictify_properties(self.getter(ob, name), self.get_properties(schema))
         else:
             return self.convert(ob, name, (type_, schema.get("format")), self.registry)
+
+    def get_properties(self, schema):
+        if "properties" in schema:
+            return schema["properties"]
+        elif "$ref" in schema:
+            ref = schema["$ref"]
+            if not ref.startswith("#/"):
+                raise NotImplemented(ref)
+            target = self.schema
+            for k in ref.split("/")[1:]:
+                target = target[k]
+            return self.get_properties(target)
+        else:
+            return schema
 
 
 def dictify(ob, schema, convert=attribute_of):
