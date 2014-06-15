@@ -1,11 +1,14 @@
 # -*- coding:utf-8 -*-
+import logging
+logger = logging.getLogger(__name__)
+
 from collections import OrderedDict
 import sqlalchemy.types as t
 from sqlalchemy.inspection import inspect
 from sqlalchemy.orm.properties import ColumnProperty
 from sqlalchemy.orm.relationships import RelationshipProperty
 from sqlalchemy.sql.visitors import VisitableType
-from sqlalchemy.orm.base import ONETOMANY
+from sqlalchemy.orm.base import ONETOMANY, MANYTOONE, MANYTOMANY
 from sqlalchemy.sql.type_api import TypeEngine
 
 
@@ -269,11 +272,47 @@ class ChildFactory(object):
         return walker.clone(name, prop.mapper, includes=includes, excludes=excludes, history=history)
 
     def child_schema(self, prop, schema_factory, walker, overrides, depth, history):
-        subschema = schema_factory._build_properties(walker, overrides, depth=(depth and depth - 1), history=history)
+        subschema = schema_factory._build_properties(walker, overrides, depth=(depth and depth - 1), history=history, toplevel=False)
         if prop.direction == ONETOMANY:
             return {"type": "array", "items": subschema}
         else:
             return subschema
+
+RELATIONSHIP = "relationship"
+FOREIGNKEY = "foreignkey"
+NORMAL = "normal"
+
+
+class RelationDesicion(object):
+    def desicion(self, walker, prop, toplevel):
+        if hasattr(prop, "mapper"):
+            yield RELATIONSHIP, prop
+        elif hasattr(prop, "columns"):
+            yield FOREIGNKEY, prop
+        else:
+            raise NotImplemented(prop)
+
+
+class ComfortableDesicion(object):
+    def desicion(self, walker, prop, toplevel):
+        if hasattr(prop, "mapper"):
+            if prop.direction == MANYTOONE:
+                if toplevel:
+                    for c in prop.local_columns:
+                        yield FOREIGNKEY, walker.mapper._props[c.name]
+                else:
+                    rp = walker.history[0]
+                    if prop.local_columns != rp.remote_side:
+                        for c in prop.local_columns:
+                            yield FOREIGNKEY, walker.mapper._props[c.name]
+            elif prop.direction == MANYTOMANY:
+                logger.warn("skip mapper=%s, prop=%s is many to many.", walker.mapper, prop)
+            else:
+                yield RELATIONSHIP, prop
+        elif hasattr(prop, "columns"):
+            yield FOREIGNKEY, prop
+        else:
+            raise NotImplemented(prop)
 
 
 class SchemaFactory(object):
@@ -281,12 +320,14 @@ class SchemaFactory(object):
                  classifier=DefaultClassfier,
                  restriction_dict=default_restriction_dict,
                  container_factory=OrderedDict,
-                 child_factory=ChildFactory(".")):
+                 child_factory=ChildFactory("."),
+                 relation_decision=ComfortableDesicion()):
         self.container_factory = container_factory
         self.classifier = classifier
         self.walker = walker  # class
         self.restriction_dict = restriction_dict
         self.child_factory = child_factory
+        self.relation_decision = relation_decision
 
     def __call__(self, model, includes=None, excludes=None, overrides=None, depth=None):
         walker = self.walker(model, includes=includes, excludes=excludes)
@@ -318,7 +359,7 @@ class SchemaFactory(object):
             if fn is not None:
                 fn(column, D)
 
-    def _build_properties(self, walker, overrides, depth=None, history=None):
+    def _build_properties(self, walker, overrides, depth=None, history=None, toplevel=True):
         if depth is not None and depth <= 0:
             return self.container_factory()
 
@@ -327,30 +368,31 @@ class SchemaFactory(object):
             history = []
 
         for prop in walker.walk():
-            if hasattr(prop, "mapper"):     # RelationshipProperty
-                history.append(prop)
-                subwalker = self.child_factory.child_walker(prop, walker, history=history)
-                suboverrides = self.child_factory.child_overrides(prop, overrides)
-                D[prop.key] = self.child_factory.child_schema(prop, self, subwalker, suboverrides, depth=depth, history=history)
-                history.pop()
-            elif hasattr(prop, "columns"):  # ColumnProperty
-                for c in prop.columns:
-                    sub = {}
-                    if type(c.type) != VisitableType:
-                        itype, sub["type"] = self.classifier[c.type]
+            for action, prop in self.relation_decision.desicion(walker, prop, toplevel):
+                if action == RELATIONSHIP:     # RelationshipProperty
+                    history.append(prop)
+                    subwalker = self.child_factory.child_walker(prop, walker, history=history)
+                    suboverrides = self.child_factory.child_overrides(prop, overrides)
+                    D[prop.key] = self.child_factory.child_schema(prop, self, subwalker, suboverrides, depth=depth, history=history)
+                    history.pop()
+                elif action == FOREIGNKEY:  # ColumnProperty
+                    for c in prop.columns:
+                        sub = {}
+                        if type(c.type) != VisitableType:
+                            itype, sub["type"] = self.classifier[c.type]
 
-                        self._add_restriction_if_found(sub, c, itype)
+                            self._add_restriction_if_found(sub, c, itype)
 
-                        if c.doc:
-                            sub["description"] = c.doc
+                            if c.doc:
+                                sub["description"] = c.doc
 
-                        if c.name in overrides:
-                            overrides.overrides(sub)
+                            if c.name in overrides:
+                                overrides.overrides(sub)
 
-                        D[c.name] = sub
-                    else:
-                        raise NotImplemented
-                D[prop.key] = sub
+                            D[c.name] = sub
+                        else:
+                            raise NotImplemented
+                    D[prop.key] = sub
         return D
 
     def _detect_required(self, walker):
