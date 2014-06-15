@@ -139,7 +139,8 @@ class DictWalker(object):
     def on_property(self, ob, name, schema):
         type_ = schema.get("type")
         if type_ == "array":
-            return [self.fold_properties(e, schema["items"]) for e in self.getter(ob, name, [])]
+            properties = self.get_properties(schema)
+            return [self.fold_properties(e, properties) for e in self.getter(ob, name, [])]
         elif type_ is None:
             return self.fold_properties(self.getter(ob, name), self.get_properties(schema))
         elif type_ == "object":
@@ -154,6 +155,8 @@ class DictWalker(object):
 def get_properties(schema, root_schema):
     if "properties" in schema:
         return schema["properties"]
+    if "items" in schema:
+        return get_properties(schema["items"], root_schema)
     elif "$ref" in schema:
         ref = schema["$ref"]
         if not ref.startswith("#/"):
@@ -242,7 +245,7 @@ class CreateObjectWalker(object):
             return [] if type_ == "array" else None  # xxx
 
         if type_ == "array":
-            sub_schema = schema["items"]
+            sub_schema = self.get_properties(schema)
             return [self._create_subobject(e, name, sub_schema) for e in params.get(name, [])]
         elif name not in params:
             return None
@@ -311,7 +314,7 @@ class UpdateObjectWalker(object):
             return [] if type_ == "array" else None  # xxx
 
         if type_ == "array":
-            sub_schema = schema["items"]
+            sub_schema = self.get_properties(schema)
             access = getattr(ob, name)
             for ac, sub, sub_params in list(subobject_iterate(ob, params, name)):
                 if ac == "create":
