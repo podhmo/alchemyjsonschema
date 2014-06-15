@@ -220,9 +220,9 @@ class HandControlledWalker(BaseModelWalker):
 def get_children(name, params, splitter=".", default=None):  # todo: rename
     prefix = name + splitter
     if hasattr(params, "items"):
-        return {k.split(splitter, 1)[0]: v for k, v in params.items() if k.startswith(prefix)}
+        return {k.split(splitter, 1)[1]: v for k, v in params.items() if k.startswith(prefix)}
     elif isinstance(params, (list, tuple)):
-        return [e.split(splitter, 1)[0] for e in params if e.startswith(prefix)]
+        return [e.split(splitter, 1)[1] for e in params if e.startswith(prefix)]
     else:
         return default
 
