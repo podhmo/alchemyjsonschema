@@ -271,8 +271,8 @@ class ChildFactory(object):
 
         return walker.clone(name, prop.mapper, includes=includes, excludes=excludes, history=history)
 
-    def child_schema(self, prop, schema_factory, walker, overrides, depth, history):
-        subschema = schema_factory._build_properties(walker, overrides, depth=(depth and depth - 1), history=history, toplevel=False)
+    def child_schema(self, prop, schema_factory, root_schema, walker, overrides, depth, history):
+        subschema = schema_factory._build_properties(walker, root_schema, overrides, depth=(depth and depth - 1), history=history, toplevel=False)
         if prop.direction == ONETOMANY:
             return {"type": "array", "items": subschema}
         else:
@@ -337,8 +337,8 @@ class SchemaFactory(object):
         schema = {
             "title": model.__name__,
             "type": "object",
-            "properties": self._build_properties(walker, overrides=overrides, depth=depth)
         }
+        schema["properties"] = self._build_properties(walker, schema, overrides=overrides, depth=depth)
 
         if overrides.not_used_keys:
             raise InvalidStatus("invalid overrides: {}".format(overrides.not_used_keys))
@@ -360,7 +360,20 @@ class SchemaFactory(object):
             if fn is not None:
                 fn(column, D)
 
-    def _build_properties(self, walker, overrides, depth=None, history=None, toplevel=True):
+    def _add_property_with_reference(self, root_schema, current_schema, prop, val):
+        clsname = prop.mapper.class_.__name__
+        if "definitions" not in root_schema:
+            root_schema["definitions"] = {}
+        if val["type"] == "object":
+            current_schema[prop.key] = {"type": "object", "$ref": "#/definitions/{}".format(clsname)}
+            root_schema["definitions"][clsname] = val
+        else:  # array
+            current_schema[prop.key] = {"type": "array", "items": {"$ref": "#/definitions/{}".format(clsname)}}
+            val["type"] = "object"
+            val["properties"] = val.pop("items")
+            root_schema["definitions"][clsname] = val
+
+    def _build_properties(self, walker, root_schema, overrides, depth=None, history=None, toplevel=True):
         if depth is not None and depth <= 0:
             return self.container_factory()
 
@@ -374,7 +387,8 @@ class SchemaFactory(object):
                     history.append(prop)
                     subwalker = self.child_factory.child_walker(prop, walker, history=history)
                     suboverrides = self.child_factory.child_overrides(prop, overrides)
-                    D[prop.key] = self.child_factory.child_schema(prop, self, subwalker, suboverrides, depth=depth, history=history)
+                    value = self.child_factory.child_schema(prop, self, root_schema, subwalker, suboverrides, depth=depth, history=history)
+                    self._add_property_with_reference(root_schema, D, prop, value)
                     history.pop()
                 elif action == FOREIGNKEY:  # ColumnProperty
                     for c in prop.columns:
@@ -394,7 +408,7 @@ class SchemaFactory(object):
                         else:
                             raise NotImplemented
                     D[prop.key] = sub
-                else: #immediate
+                else:  # immediate
                     D[prop.key] = action
         return D
 

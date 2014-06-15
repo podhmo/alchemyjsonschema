@@ -74,7 +74,7 @@ def test_it__validate__jsondict():
 
     jsondict = {'color': 'blue',
                 'name': 'ravenclaw',
-                'users': [{'name': 'foo', 'pk': None, 'created_at': '2000-01-01T10:00:00+00:00'}],
+                'users': [{'name': 'foo', 'pk': 1, 'created_at': '2000-01-01T10:00:00+00:00'}],
                 'pk': 1,
                 'created_at': '2000-01-01T10:00:00+00:00'}
 

@@ -115,16 +115,15 @@ def attribute_of(ob, name, type_, registry=None):
 
 
 class DictWalker(object):
-    def __init__(self, convert, getter, registry=prepare_dict, marker=marker):
+    def __init__(self, schema, convert, getter, registry=prepare_dict, marker=marker):
+        self.schema = schema
         self.convert = convert
         self.getter = getter
         self.registry = registry
         self.marker = marker
-        self.schema = None
 
-    def __call__(self, ob, schema):
-        self.schema = schema
-        return self.fold_properties(ob, self.get_properties(schema))
+    def __call__(self, ob):
+        return self.fold_properties(ob, self.get_properties(self.schema))
 
     def fold_properties(self, ob, properties):
         if ob is None:
@@ -152,37 +151,41 @@ class DictWalker(object):
         return get_properties(schema, self.schema)
 
 
+def get_reference(schema, root_schema):
+    ref = schema["$ref"]
+    if not ref.startswith("#/"):
+        raise NotImplemented(ref)
+    target = root_schema
+    for k in ref.split("/")[1:]:
+        target = target[k]
+    return target
+
+
 def get_properties(schema, root_schema):
     if "properties" in schema:
         return schema["properties"]
     if "items" in schema:
         return get_properties(schema["items"], root_schema)
     elif "$ref" in schema:
-        ref = schema["$ref"]
-        if not ref.startswith("#/"):
-            raise NotImplemented(ref)
-        target = root_schema
-        for k in ref.split("/")[1:]:
-            target = target[k]
-        return get_properties(target, root_schema)
+        return get_properties(get_reference(schema, root_schema), root_schema)
     else:
         return schema
 
 
 def dictify(ob, schema, convert=attribute_of):
-    return DictWalker(convert, getattr)(ob, schema)
+    return DictWalker(schema, convert, getattr)(ob)
 
 
 def jsonify(ob, schema, convert=jsonify_of, registry=jsonify_dict):
-    return DictWalker(convert, getattr, registry=registry)(ob, schema)
+    return DictWalker(schema, convert, getattr, registry=registry)(ob)
 
 
 def normalize(ob, schema, convert=normalize_of, registry=normalize_dict):
-    return DictWalker(convert, dict.get, registry=registry)(ob, schema)
+    return DictWalker(schema, convert, dict.get, registry=registry)(ob)
 
 
 def prepare(ob, schema, convert=prepare_of, registry=prepare_dict):
-    return DictWalker(convert, dict.get, registry=registry)(ob, schema)
+    return DictWalker(schema, convert, dict.get, registry=registry)(ob)
 
 
 class ModelLookup(object):
@@ -223,12 +226,13 @@ class ComposedModule(object):
 
 # objectify
 class CreateObjectWalker(object):
-    def __init__(self, modellookup, strict=True):
-        self.schema = None
+    def __init__(self, schema, modellookup, strict=True):
+        self.schema = schema
         self.modellookup = modellookup
         self.strict = strict
 
-    def __call__(self, params, schema):
+    def __call__(self, params):
+        schema = self.schema
         result = self._create_subobject(params, schema["title"], schema)
         assert self.modellookup.name_stack == []
         return result
@@ -276,23 +280,23 @@ class CreateObjectWalker(object):
 
 
 def objectify(params, schema, modellookup, strict=True):
-    return CreateObjectWalker(modellookup, strict)(params, schema)
+    return CreateObjectWalker(schema, modellookup, strict)(params)
 
 
 # apply_changes
 def apply_changes(ob, params, schema, modellookup):
-    return UpdateObjectWalker(modellookup)(ob, params, schema)
+    return UpdateObjectWalker(schema, modellookup)(ob, params)
 
 
 class UpdateObjectWalker(object):
-    def __init__(self, modellookup, strict=True):
-        self.schema = None
+    def __init__(self, schema, modellookup, strict=True):
+        self.schema = schema
         self.modellookup = modellookup
         self.strict = strict
-        self.create_walker = CreateObjectWalker(modellookup, strict)
+        self.create_walker = CreateObjectWalker(schema, modellookup, strict)
 
-    def __call__(self, ob, params, schema):
-        self.schema = schema
+    def __call__(self, ob, params):
+        schema = self.schema
         model_class = self.modellookup(schema["title"])
         params = self.fold_properties(ob, params, self.get_properties(schema))
         assert model_class == ob.__class__

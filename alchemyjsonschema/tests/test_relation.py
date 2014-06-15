@@ -68,9 +68,7 @@ def test_properties__include_OnetoMany_relation():
 
     assert "required" in result
     assert list(sorted(result["properties"])) == ["group", "name", "pk"]
-    assert result["properties"]["group"] == {"type": "object", "properties":
-                                             {'name': {'maxLength': 255, 'type': 'string'},
-                                              'pk': {'description': 'primary key', 'type': 'integer'}}}
+    assert result["properties"]["group"] == {"type": "object", "$ref": "#/definitions/Group"}
 
 
 def test_properties__include_OnetoMany_relation2():
@@ -90,9 +88,10 @@ def test_properties__include_ManytoOne_backref():
 
     assert "required" in result
     assert list(sorted(result["properties"])) == ["name", "pk", "users"]
-    assert result["properties"]["users"] == {"type": "array",
-                                             "items": {'name': {'maxLength': 255, 'type': 'string'},
-                                                       'pk': {'description': 'primary key', 'type': 'integer'}}}
+    assert result["properties"]["users"] == {"type": "array", "items": {"$ref": "#/definitions/User"}}
+    assert result["definitions"]["User"] == {"type": "object", "properties": {'name': {'maxLength': 255, 'type': 'string'},
+                                                    'pk': {'description': 'primary key', 'type': 'integer'}}}
+
 
 
 # depth
@@ -144,38 +143,43 @@ class A5(Base):
 
 def test_properties__default_depth_is__traverse_all_chlidren():
     from alchemyjsonschema import AlsoChildrenWalker
+    from alchemyjsonschema.dictify import get_reference
     target = _makeOne(AlsoChildrenWalker)
     result = target(A0)
 
     assert "required" in result
     assert list(sorted(result["properties"])) == ["children", "pk"]
-    assert (result["properties"]
-            ["children"]["items"]["children"]["items"]["children"]["items"]["children"]["items"]["children"]["items"]
-            ["pk"]["description"] == "primary key5")
+    children0 = get_reference(result["properties"]["children"]["items"], result)
+    children1 = get_reference(children0["properties"]["children"]["items"], result)
+    children2 = get_reference(children1["properties"]["children"]["items"], result)
+    children3 = get_reference(children2["properties"]["children"]["items"], result)
+    children4 = get_reference(children3["properties"]["children"]["items"], result)
+    assert children4["properties"]["pk"]["description"] == "primary key5"
 
 
 def test_properties__default_depth_is__2__traverse_depth2():
     from alchemyjsonschema import AlsoChildrenWalker
+    from alchemyjsonschema.dictify import get_reference
     target = _makeOne(AlsoChildrenWalker)
     result = target(A0, depth=2)
 
     assert "required" in result
     assert list(sorted(result["properties"])) == ["children", "pk"]
-    assert (result["properties"]
-            ["children"]["items"]
-            ["pk"]["description"] == "primary key1")
+    children0 = get_reference(result["properties"]["children"]["items"], result)
+    assert children0["properties"]["pk"]["description"] == "primary key1"
 
 
 def test_properties__default_depth_is__3__traverse_depth3():
     from alchemyjsonschema import AlsoChildrenWalker
+    from alchemyjsonschema.dictify import get_reference
     target = _makeOne(AlsoChildrenWalker)
     result = target(A0, depth=3)
 
     assert "required" in result
     assert list(sorted(result["properties"])) == ["children", "pk"]
-    assert (result["properties"]
-            ["children"]["items"]["children"]["items"]
-            ["pk"]["description"] == "primary key2")
+    children0 = get_reference(result["properties"]["children"]["items"], result)
+    children1 = get_reference(children0["properties"]["children"]["items"], result)
+    assert children1["properties"]["pk"]["description"] == "primary key2"
 
 
 # regression
@@ -204,12 +208,15 @@ class Z(Base):
 
 def test_properties__infinite_loop():
     from alchemyjsonschema import AlsoChildrenWalker, RelationDesicion
+    from alchemyjsonschema.dictify import get_reference
     target = _makeOne(AlsoChildrenWalker, relation_decision=RelationDesicion())
     result = target(X)
+    ys = result["properties"]["ys"]
+    zs = get_reference(ys, result)["properties"]["zs"]
+    xs = get_reference(zs, result)["properties"]
     assert "required" in result
     assert list(sorted(result["properties"])) == ["id", "ys"]
-
-    assert result["properties"]["ys"]["properties"]["zs"]["properties"]["id"]["description"] == "primary key"
+    assert xs["id"]["description"] == "primary key"
 
 
 def test_properties__infinite_loop2():
