@@ -106,17 +106,22 @@ help
 .. code:: bash
 
     $ alchemyjsonschema -h
-    usage: alchemyjsonschema [-h] [--walker {onlyone,single,alsochildren}]
-                             program model
+    usage: alchemyjsonschema [-h]
+                             [--walker {noforeignkey,foreignkey,structual,control}]
+                             [--depth DEPTH]
+                             [--decision-relationship DECISION_RELATIONSHIP]
+                             [--decision-foreignkey DECISION_FOREIGNKEY]
+                             model
 
     positional arguments:
-      program
       model
 
     optional arguments:
       -h, --help            show this help message and exit
-      --walker {onlyone,single,alsochildren}
-
+      --walker {noforeignkey,foreignkey,structual,control}
+      --depth DEPTH
+      --decision-relationship DECISION_RELATIONSHIP
+      --decision-foreignkey DECISION_FOREIGNKEY
 
 target models
 
@@ -147,7 +152,7 @@ dump schema (commandline)
 
 .. code:: bash
 
-    $ alchemyjsonschema alchemyjsonschema.tests.models:Group --walker alsochildren
+    $ alchemyjsonschema alchemyjsonschema.tests.models:Group --walker structual
 
     {
       "title": "Group", 
