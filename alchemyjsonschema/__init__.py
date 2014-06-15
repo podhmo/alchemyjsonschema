@@ -321,7 +321,7 @@ class SchemaFactory(object):
                  restriction_dict=default_restriction_dict,
                  container_factory=OrderedDict,
                  child_factory=ChildFactory("."),
-                 relation_decision=ComfortableDesicion()):
+                 relation_decision=RelationDesicion()):
         self.container_factory = container_factory
         self.classifier = classifier
         self.walker = walker  # class

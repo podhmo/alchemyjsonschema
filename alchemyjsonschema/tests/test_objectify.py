@@ -66,13 +66,13 @@ def test_it__strict_false__then__required_are_notfound__ok():
     assert result.group_id is None
 
 
-def test_it_complex():
-    from alchemyjsonschema import SchemaFactory, AlsoChildrenWalker
+def test_it_complex__relation_decision():
+    from alchemyjsonschema import SchemaFactory, AlsoChildrenWalker, RelationDesicion
     from alchemyjsonschema.dictify import ModelLookup
     import alchemyjsonschema.tests.models as models
     from datetime import datetime
 
-    factory = SchemaFactory(AlsoChildrenWalker)
+    factory = SchemaFactory(AlsoChildrenWalker, relation_decision=RelationDesicion())
     user_schema = factory(models.User)
 
     created_at = datetime(2000, 1, 1)
@@ -94,6 +94,29 @@ def test_it_complex():
     assert result.group.color == "blue"
     assert result.group.created_at == created_at2
 
+    assert modellookup.name_stack == []
+
+
+def test_it_complex__comfortable_decision():
+    from alchemyjsonschema import SchemaFactory, AlsoChildrenWalker, ComfortableDesicion
+    from alchemyjsonschema.dictify import ModelLookup
+    import alchemyjsonschema.tests.models as models
+    from datetime import datetime
+
+    factory = SchemaFactory(AlsoChildrenWalker, relation_decision=ComfortableDesicion())
+    user_schema = factory(models.User)
+
+    created_at = datetime(2000, 1, 1)
+    user_dict = dict(name="foo", created_at=created_at, group_id=1)  # pk is not found
+    modellookup = ModelLookup(models)
+
+    result = _callFUT(user_dict, user_schema, modellookup, strict=False)
+
+    assert isinstance(result, models.User)
+    assert result.pk is None
+    assert result.name == "foo"
+    assert result.created_at == datetime(2000, 1, 1)
+    assert result.group_id is 1
     assert modellookup.name_stack == []
 
 

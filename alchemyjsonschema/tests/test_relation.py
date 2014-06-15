@@ -4,9 +4,9 @@ def _getTarget():
     return SchemaFactory
 
 
-def _makeOne(walker):
+def _makeOne(walker, *args, **kwargs):
     from alchemyjsonschema import DefaultClassfier
-    return _getTarget()(walker, DefaultClassfier)
+    return _getTarget()(walker, DefaultClassfier, *args, **kwargs)
 
 
 # definition
@@ -62,14 +62,24 @@ def test_properties__only_onesself__not_includes__foreign_keys():
 
 
 def test_properties__include_OnetoMany_relation():
-    from alchemyjsonschema import AlsoChildrenWalker
-    target = _makeOne(AlsoChildrenWalker)
+    from alchemyjsonschema import AlsoChildrenWalker, RelationDesicion
+    target = _makeOne(AlsoChildrenWalker, relation_decision=RelationDesicion())
     result = target(User)
 
     assert "required" in result
     assert list(sorted(result["properties"])) == ["group", "name", "pk"]
     assert result["properties"]["group"] == {'name': {'maxLength': 255, 'type': 'string'},
                                              'pk': {'description': 'primary key', 'type': 'integer'}}
+
+
+def test_properties__include_OnetoMany_relation2():
+    from alchemyjsonschema import AlsoChildrenWalker, ComfortableDesicion
+    target = _makeOne(AlsoChildrenWalker, relation_decision=ComfortableDesicion())
+    result = target(User)
+
+    assert "required" in result
+    assert list(sorted(result["properties"])) == ["group_id", "name", "pk"]
+    assert result["properties"]["group_id"] == {'type': 'integer'}
 
 
 def test_properties__include_ManytoOne_backref():
@@ -192,10 +202,19 @@ class Z(Base):
 
 
 def test_properties__infinite_loop():
-    from alchemyjsonschema import AlsoChildrenWalker
-    target = _makeOne(AlsoChildrenWalker)
+    from alchemyjsonschema import AlsoChildrenWalker, RelationDesicion
+    target = _makeOne(AlsoChildrenWalker, relation_decision=RelationDesicion())
     result = target(X)
     assert "required" in result
     assert list(sorted(result["properties"])) == ["id", "ys"]
 
     assert result["properties"]["ys"]["zs"]["id"]["description"] == "primary key"
+
+def test_properties__infinite_loop2():
+    from alchemyjsonschema import AlsoChildrenWalker, ComfortableDesicion
+    target = _makeOne(AlsoChildrenWalker, relation_decision=ComfortableDesicion())
+    result = target(X)
+    assert "required" in result
+    assert list(sorted(result["properties"])) == ["id", "y_id"]
+
+    assert result["properties"]["y_id"] == {"type": "integer"}
