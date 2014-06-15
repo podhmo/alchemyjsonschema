@@ -10,7 +10,9 @@ from . import (
     AlsoChildrenWalker,
     OneModelOnlyWalker,
     SingleModelWalker,
-    HandControlledWalkerFactory
+    HandControlledWalkerFactory,
+    RelationDesicion,
+    ComfortableDesicion
 )
 
 
@@ -37,8 +39,17 @@ def detect_walker(x):
         raise Exception(x)
 
 
-def run(model, walker, depth=None):
-    make_schema = SchemaFactory(walker)
+def detect_decision(x):
+    if x == "default":
+        return RelationDesicion()
+    elif x == "comfortable":
+        return ComfortableDesicion()
+    else:
+        raise Exception(x)
+
+
+def run(model, walker, depth=None, relation_decision=None):
+    make_schema = SchemaFactory(walker, relation_decision=relation_decision)
     schema = make_schema(model, depth=depth)
     print(json.dumps(schema, indent=2, ensure_ascii=False))
 
@@ -47,6 +58,7 @@ def main(sys_args=sys.argv[1:]):
     parser = argparse.ArgumentParser()
     parser.add_argument("model")
     parser.add_argument("--walker", choices=["noforeignkey", "foreignkey", "structual", "control"], default="structual")
+    parser.add_argument("--decision", choices=["default", "comfortable"], default="default")
     parser.add_argument("--depth", default=None, type=int)
     parser.add_argument("--decision-relationship", default="")
     parser.add_argument("--decision-foreignkey", default="")
@@ -57,4 +69,4 @@ def main(sys_args=sys.argv[1:]):
         decisions = {k.strip(): "relationship" for k in args.decision_relationship.split(" ")}
         decisions.update({k.strip(): "foreignkey" for k in args.decision_foreignkey.split(" ")})
         walker = walker(decisions)
-    return run(model, walker, depth=args.depth)
+    return run(model, walker, depth=args.depth, relation_decision=detect_decision(args.decision))

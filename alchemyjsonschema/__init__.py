@@ -280,7 +280,7 @@ class ChildFactory(object):
 
 RELATIONSHIP = "relationship"
 FOREIGNKEY = "foreignkey"
-NORMAL = "normal"
+IMMEDIATE = "immediate"
 
 
 class RelationDesicion(object):
@@ -306,7 +306,8 @@ class ComfortableDesicion(object):
                         for c in prop.local_columns:
                             yield FOREIGNKEY, walker.mapper._props[c.name]
             elif prop.direction == MANYTOMANY:
-                logger.warn("skip mapper=%s, prop=%s is many to many.", walker.mapper, prop)
+                # logger.warn("skip mapper=%s, prop=%s is many to many.", walker.mapper, prop)
+                yield {"type": "array", "items": {"type": "string"}}, prop
             else:
                 yield RELATIONSHIP, prop
         elif hasattr(prop, "columns"):
@@ -393,6 +394,8 @@ class SchemaFactory(object):
                         else:
                             raise NotImplemented
                     D[prop.key] = sub
+                else: #immediate
+                    D[prop.key] = action
         return D
 
     def _detect_required(self, walker):
