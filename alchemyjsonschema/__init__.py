@@ -276,7 +276,7 @@ class ChildFactory(object):
         if prop.direction == ONETOMANY:
             return {"type": "array", "items": subschema}
         else:
-            return subschema
+            return {"type": "object", "properties": subschema}
 
 RELATIONSHIP = "relationship"
 FOREIGNKEY = "foreignkey"

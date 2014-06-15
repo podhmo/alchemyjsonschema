@@ -68,8 +68,9 @@ def test_properties__include_OnetoMany_relation():
 
     assert "required" in result
     assert list(sorted(result["properties"])) == ["group", "name", "pk"]
-    assert result["properties"]["group"] == {'name': {'maxLength': 255, 'type': 'string'},
-                                             'pk': {'description': 'primary key', 'type': 'integer'}}
+    assert result["properties"]["group"] == {"type": "object", "properties":
+                                             {'name': {'maxLength': 255, 'type': 'string'},
+                                              'pk': {'description': 'primary key', 'type': 'integer'}}}
 
 
 def test_properties__include_OnetoMany_relation2():
@@ -208,7 +209,8 @@ def test_properties__infinite_loop():
     assert "required" in result
     assert list(sorted(result["properties"])) == ["id", "ys"]
 
-    assert result["properties"]["ys"]["zs"]["id"]["description"] == "primary key"
+    assert result["properties"]["ys"]["properties"]["zs"]["properties"]["id"]["description"] == "primary key"
+
 
 def test_properties__infinite_loop2():
     from alchemyjsonschema import AlsoChildrenWalker, ComfortableDesicion

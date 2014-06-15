@@ -247,7 +247,7 @@ class CreateObjectWalker(object):
         elif name not in params:
             return None
         elif type_ == "object":
-            sub_params = params.get[name]
+            sub_params = params[name]
             return self._create_subobject(sub_params, name, schema)
         elif type_ is None:  # object
             sub_params = params.get(name)
@@ -324,11 +324,14 @@ class UpdateObjectWalker(object):
             return getattr(ob, name)
         elif name not in params:
             return None
+        elif type_ == "object":
+            sub_params = params[name]
+            return self._update_subobject(ob, sub_params, name, schema)
         elif type_ is None:  # object
             sub_params = params.get(name)
             if sub_params is None:
                 return None
-            return self._update_subobject(ob, params[name], name, schema)
+            return self._update_subobject(ob, sub_params, name, schema)
         else:
             return params.get(name)
 
@@ -341,7 +344,7 @@ class UpdateObjectWalker(object):
         else:
             sub_model = self.modellookup(name)
             assert sub.__class__ == sub_model
-            sub = self.fold_properties(sub, params, schema)
+            sub = self.fold_properties(sub, params, self.get_properties(schema))
             self.modellookup.pop()
             return sub
 
