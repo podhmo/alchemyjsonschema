@@ -148,18 +148,22 @@ class DictWalker(object):
             return self.convert(ob, name, (type_, schema.get("format")), self.registry)
 
     def get_properties(self, schema):
-        if "properties" in schema:
-            return schema["properties"]
-        elif "$ref" in schema:
-            ref = schema["$ref"]
-            if not ref.startswith("#/"):
-                raise NotImplemented(ref)
-            target = self.schema
-            for k in ref.split("/")[1:]:
-                target = target[k]
-            return self.get_properties(target)
-        else:
-            return schema
+        return get_properties(schema, self.schema)
+
+
+def get_properties(schema, root_schema):
+    if "properties" in schema:
+        return schema["properties"]
+    elif "$ref" in schema:
+        ref = schema["$ref"]
+        if not ref.startswith("#/"):
+            raise NotImplemented(ref)
+        target = root_schema
+        for k in ref.split("/")[1:]:
+            target = target[k]
+        return get_properties(target, root_schema)
+    else:
+        return schema
 
 
 def dictify(ob, schema, convert=attribute_of):
@@ -215,89 +219,134 @@ class ComposedModule(object):
 
 
 # objectify
-def _objectify_subobject(params, name, schema, modellookup):
-    sub_model = modellookup(name)
-    sub_params = objectify_propperties(params, schema, modellookup)
-    sub = sub_model(**sub_params)
-    modellookup.pop()
-    return sub
+class CreateObjectWalker(object):
+    def __init__(self, modellookup, strict=True):
+        self.schema = None
+        self.modellookup = modellookup
+        self.strict = strict
+
+    def __call__(self, params, schema):
+        model_class = self.modellookup(schema["title"])
+        params = self.objectify_propperties(params, self.get_properties(schema))
+        result = model_class(**params)
+        self.modellookup.pop()
+        if self.strict:
+            for k in schema.get("required", []):
+                if getattr(result, k) is None:
+                    raise InvalidStatus("{}.{} is None. this is required.".format(model_class, k))
+        assert self.modellookup.name_stack == []
+        return result
+
+    def objectify_propperties(self, params, properties):
+        D = {}
+        for k, schema in properties.items():
+            D[k] = self._objectify(params, k, schema)
+        return D
+
+    def _objectify(self, params, name, schema):
+        type_ = schema.get("type")
+        if params is None:
+            return [] if type_ == "array" else None  # xxx
+
+        if type_ == "array":
+            sub_schema = schema["items"]
+            return [self._objectify_subobject(e, name, sub_schema) for e in params.get(name, [])]
+        elif name not in params:
+            return None
+        elif type_ == "object":
+            sub_params = params.get[name]
+            return self._objectify_subobject(sub_params, name, schema)
+        elif type_ is None:  # object
+            sub_params = params.get(name)
+            if sub_params is None:
+                return None
+            return self._objectify_subobject(sub_params, name, schema)
+        else:
+            return params.get(name)
+
+    def _objectify_subobject(self, params, name, schema):
+        sub_model = self.modellookup(name)
+        sub_params = self.objectify_propperties(params, self.get_properties(schema))
+        sub = sub_model(**sub_params)
+        self.modellookup.pop()
+        return sub
+
+    def get_properties(self, schema):
+        return get_properties(schema, self.schema)
 
 
 def objectify(params, schema, modellookup, strict=True):
-    model_class = modellookup(schema["title"])
-    params = objectify_propperties(params, schema["properties"], modellookup)
-    result = model_class(**params)
-    modellookup.pop()
-    if strict:
-        for k in schema.get("required", []):
-            if getattr(result, k) is None:
-                raise InvalidStatus("{}.{} is None. this is required.".format(model_class, k))
-    assert modellookup.name_stack == []
-    return result
-
-
-def objectify_propperties(params, properties, modellookup):
-    D = {}
-    for k, schema in properties.items():
-        D[k] = _objectify(params, k, schema, modellookup)
-    return D
-
-
-def _objectify(params, name, schema, modellookup):
-    type_ = schema.get("type")
-    if params is None:
-        return [] if type_ == "array" else None  # xxx
-
-    if type_ == "array":
-        sub_schema = schema["items"]
-        return [_objectify_subobject(e, name, sub_schema, modellookup) for e in params.get(name, [])]
-    elif name not in params:
-        return None
-    elif type_ is None:  # object
-        sub_params = params.get(name)
-        if sub_params is None:
-            return None
-        return _objectify_subobject(params[name], name, schema, modellookup)
-    else:
-        return params.get(name)
+    return CreateObjectWalker(modellookup, strict)(params, schema)
 
 
 # apply_changes
-def _apply_changes_subobject(parent, params, name, schema, modellookup):
-    if params is None:
-        return None
-    sub = getattr(parent, name, None)
-    if sub is None:
-        return _objectify_subobject(params, name, schema, modellookup)
-    else:
-        sub_model = modellookup(name)
-        assert sub.__class__ == sub_model
-        sub = apply_changes_propperties(sub, params, schema, modellookup)
-        modellookup.pop()
-        return sub
-
-
 def apply_changes(ob, params, schema, modellookup):
-    model_class = modellookup(schema["title"])
-    params = apply_changes_propperties(ob, params, schema["properties"], modellookup)
-    assert model_class == ob.__class__
-    modellookup.pop()
-    assert modellookup.name_stack == []
-    return ob
+    return UpdateObjectWalker(modellookup)(ob, params, schema)
 
 
-def apply_changes_propperties(ob, params, properties, modellookup):
-    for k, schema in properties.items():
-        setattr(ob, k, _apply_changes(ob, params, k, schema, modellookup))
-    return ob
+class UpdateObjectWalker(object):
+    def __init__(self, modellookup, strict=True):
+        self.schema = None
+        self.modellookup = modellookup
+        self.strict = strict
+        self.create_walker = CreateObjectWalker(modellookup, strict)
 
+    def __call__(self, ob, params, schema):
+        self.schema = schema
+        model_class = self.modellookup(schema["title"])
+        params = self.apply_changes_propperties(ob, params, self.get_properties(schema))
+        assert model_class == ob.__class__
+        self.modellookup.pop()
+        assert self.modellookup.name_stack == []
+        return ob
 
-def _get_primary_keys_from_object(ob):
-    return tuple(sorted(col.name for col in inspect(ob).mapper.primary_key))
+    def get_properties(self, schema):
+        return get_properties(schema, self.schema)
 
+    def apply_changes_propperties(self, ob, params, properties):
+        for k, schema in properties.items():
+            setattr(ob, k, self._apply_changes(ob, params, k, schema))
+        return ob
 
-def _get_primary_keys_from_params(sub_params, primary_keys):
-    return tuple(sorted(sub_params.get(k) for k in primary_keys))
+    def _apply_changes(self, ob, params, name, schema):
+        type_ = schema.get("type")
+        if params is None:
+            return [] if type_ == "array" else None  # xxx
+
+        if type_ == "array":
+            sub_schema = schema["items"]
+            access = getattr(ob, name)
+            for ac, sub, sub_params in list(subobject_iterate(ob, params, name)):
+                if ac == "create":
+                    access.append(self.create_walker._objectify_subobject(sub_params, name, sub_schema))
+                elif ac == "update":
+                    for k, v in sub_params.items():  # xxx:
+                        setattr(sub, k, v)
+                elif ac == "delete":
+                    access.remove(sub)
+            return getattr(ob, name)
+        elif name not in params:
+            return None
+        elif type_ is None:  # object
+            sub_params = params.get(name)
+            if sub_params is None:
+                return None
+            return self._apply_changes_subobject(ob, params[name], name, schema)
+        else:
+            return params.get(name)
+
+    def _apply_changes_subobject(self, parent, params, name, schema):
+        if params is None:
+            return None
+        sub = getattr(parent, name, None)
+        if sub is None:
+            return self.create_walker._objectify_subobject(params, name, schema)
+        else:
+            sub_model = self.modellookup(name)
+            assert sub.__class__ == sub_model
+            sub = self.apply_changes_propperties(sub, params, schema)
+            self.modellookup.pop()
+            return sub
 
 
 def subobject_iterate(ob, params, name):
@@ -325,32 +374,12 @@ def subobject_iterate(ob, params, name):
             yield "delete", sub, None
 
 
-def _apply_changes(ob, params, name, schema, modellookup):
-    type_ = schema.get("type")
-    if params is None:
-        return [] if type_ == "array" else None  # xxx
+def _get_primary_keys_from_object(ob):
+    return tuple(sorted(col.name for col in inspect(ob).mapper.primary_key))
 
-    if type_ == "array":
-        sub_schema = schema["items"]
-        access = getattr(ob, name)
-        for ac, sub, sub_params in list(subobject_iterate(ob, params, name)):
-            if ac == "create":
-                access.append(_objectify_subobject(sub_params, name, sub_schema, modellookup))
-            elif ac == "update":
-                for k, v in sub_params.items():  # xxx:
-                    setattr(sub, k, v)
-            elif ac == "delete":
-                access.remove(sub)
-        return getattr(ob, name)
-    elif name not in params:
-        return None
-    elif type_ is None:  # object
-        sub_params = params.get(name)
-        if sub_params is None:
-            return None
-        return _apply_changes_subobject(ob, params[name], name, schema, modellookup)
-    else:
-        return params.get(name)
+
+def _get_primary_keys_from_params(sub_params, primary_keys):
+    return tuple(sorted(sub_params.get(k) for k in primary_keys))
 
 
 class ErrorFound(Exception):  # xxx:
