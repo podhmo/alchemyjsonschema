@@ -67,11 +67,14 @@ factory = SchemaFactory(AlsoChildrenWalker)
 pp.pprint(factory(User))
 
 """
-{'properties': {'group': {'name': {'maxLength': 255, 'type': 'string'},
-                          'pk': {'description': 'primary key',
-                                 'type': 'integer'}},
+{'definitions': {'Group': {'properties': {'pk': {'description': 'primary key',
+                                                 'type': 'integer'},
+                                          'name': {'maxLength': 255,
+                                                   'type': 'string'}},
+                           'type': 'object'}},
+ 'properties': {'pk': {'description': 'primary key', 'type': 'integer'},
                 'name': {'maxLength': 255, 'type': 'string'},
-                'pk': {'description': 'primary key', 'type': 'integer'}},
+                'group': {'$ref': '#/definitions/Group'}},
  'required': ['pk'],
  'title': 'User',
  'type': 'object'}
@@ -80,13 +83,15 @@ pp.pprint(factory(User))
 pp.pprint(factory(Group))
 
 """
-{'description': 'model for test',
- 'properties': {'name': {'maxLength': 255, 'type': 'string'},
-                'pk': {'description': 'primary key', 'type': 'integer'},
-                'users': {'items': {'name': {'maxLength': 255,
-                                             'type': 'string'},
-                                    'pk': {'description': 'primary key',
-                                           'type': 'integer'}},
+{'definitions': {'User': {'properties': {'pk': {'description': 'primary key',
+                                                'type': 'integer'},
+                                         'name': {'maxLength': 255,
+                                                  'type': 'string'}},
+                          'type': 'object'}},
+ 'description': 'model for test',
+ 'properties': {'pk': {'description': 'primary key', 'type': 'integer'},
+                'name': {'maxLength': 255, 'type': 'string'},
+                'users': {'items': {'$ref': '#/definitions/User'},
                           'type': 'array'}},
  'required': ['pk', 'name'],
  'title': 'Group',

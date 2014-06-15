@@ -72,11 +72,14 @@ alchemyjsonschema
    pp.pprint(factory.create(User))
 
    """
-   {'properties': {'group': {'name': {'maxLength': 255, 'type': 'string'},
-                             'pk': {'description': 'primary key',
-                                    'type': 'integer'}},
+   {'definitions': {'Group': {'properties': {'pk': {'description': 'primary key',
+                                                    'type': 'integer'},
+                                             'name': {'maxLength': 255,
+                                                      'type': 'string'}},
+                              'type': 'object'}},
+    'properties': {'pk': {'description': 'primary key', 'type': 'integer'},
                    'name': {'maxLength': 255, 'type': 'string'},
-                   'pk': {'description': 'primary key', 'type': 'integer'}},
+                   'group': {'$ref': '#/definitions/Group'}},
     'required': ['pk'],
     'title': 'User',
     'type': 'object'}
@@ -85,18 +88,21 @@ alchemyjsonschema
    pp.pprint(factory.create(Group))
 
    """
-   {'description': 'model for test',
-    'properties': {'name': {'maxLength': 255, 'type': 'string'},
-                   'pk': {'description': 'primary key', 'type': 'integer'},
-                   'users': {'items': {'name': {'maxLength': 255,
-                                                'type': 'string'},
-                                       'pk': {'description': 'primary key',
-                                              'type': 'integer'}},
+   {'definitions': {'User': {'properties': {'pk': {'description': 'primary key',
+                                                   'type': 'integer'},
+                                            'name': {'maxLength': 255,
+                                                     'type': 'string'}},
+                             'type': 'object'}},
+    'description': 'model for test',
+    'properties': {'pk': {'description': 'primary key', 'type': 'integer'},
+                   'name': {'maxLength': 255, 'type': 'string'},
+                   'users': {'items': {'$ref': '#/definitions/User'},
                              'type': 'array'}},
     'required': ['pk', 'name'],
     'title': 'Group',
     'type': 'object'}
    """
+
 
 has alchemyjsonschema command
 ----------------------------------------
@@ -155,51 +161,59 @@ dump schema (commandline)
     $ alchemyjsonschema alchemyjsonschema.tests.models:Group --walker structual
 
     {
-      "title": "Group", 
       "required": [
-        "pk", 
+        "pk",
         "name"
-      ], 
-      "type": "object", 
-      "properties": {
-        "pk": {
-          "type": "integer", 
-          "description": "primary key"
-        }, 
-        "name": {
-          "maxLength": 255, 
-          "type": "string"
-        }, 
-        "color": {
-          "maxLength": 6, 
-          "type": "string", 
-          "enum": [
-            "red", 
-            "green", 
-            "yellow", 
-            "blue"
-          ]
-        }, 
-        "created_at": {
-          "type": "string", 
-          "format": "date-time"
-        }, 
-        "users": {
-          "type": "array", 
-          "items": {
+      ],
+      "definitions": {
+        "User": {
+          "type": "object",
+          "properties": {
             "pk": {
-              "type": "integer", 
+              "type": "integer",
               "description": "primary key"
-            }, 
+            },
             "name": {
-              "maxLength": 255, 
+              "maxLength": 255,
               "type": "string"
-            }, 
+            },
             "created_at": {
-              "type": "string", 
-              "format": "date-time"
+              "format": "date-time",
+              "type": "string"
             }
           }
+        }
+      },
+      "title": "Group",
+      "type": "object",
+      "properties": {
+        "pk": {
+          "type": "integer",
+          "description": "primary key"
+        },
+        "name": {
+          "maxLength": 255,
+          "type": "string"
+        },
+        "color": {
+          "enum": [
+            "red",
+            "green",
+            "yellow",
+            "blue"
+          ],
+          "maxLength": 6,
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "users": {
+          "items": {
+            "$ref": "#/definitions/User"
+          },
+          "type": "array"
         }
       }
     }
