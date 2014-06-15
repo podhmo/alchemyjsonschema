@@ -110,50 +110,56 @@ def prepare_of(ob, name, type_, registry=prepare_dict):
         raise ConvertionError(name, e.args[0])
 
 
-def attribute_of(ob, name, type_):
+def attribute_of(ob, name, type_, registry=None):
     return getattr(ob, name)
 
 
-def dictify(ob, schema, convert=attribute_of, getter=getattr):
-    return dictify_properties(ob, schema["properties"], convert=convert, getter=getter)
+class DictWalker(object):
+    def __init__(self, convert, getter, registry=prepare_dict, marker=marker):
+        self.convert = convert
+        self.getter = getter
+        self.registry = registry
+        self.marker = marker
+
+    def __call__(self, ob, schema):
+        return self.dictify_properties(ob, schema["properties"])
+
+    def dictify_properties(self, ob, properties):
+        if ob is None:
+            return None
+        D = {}
+        for k, v in properties.items():
+            val = self._dictify(ob, k, v)
+            if val is not self.marker:
+                D[k] = val
+        return D
+
+    def _dictify(self, ob, name, schema):
+        type_ = schema.get("type")
+        if type_ == "array":
+            return [self.dictify_properties(e, schema["items"]) for e in self.getter(ob, name, [])]
+        elif type_ is None:
+            return self.dictify_properties(self.getter(ob, name), schema)
+        elif type_ == "object":
+            return self.dictify_properties(self.getter(ob, name), schema["properties"])
+        else:
+            return self.convert(ob, name, (type_, schema.get("format")), self.registry)
 
 
-def jsonify(ob, schema, convert=jsonify_of, getter=getattr, registry=jsonify_dict):
-    convert = partial(convert, registry=registry)
-    return dictify_properties(ob, schema["properties"], convert=convert, getter=getter)
+def dictify(ob, schema, convert=attribute_of):
+    return DictWalker(convert, getattr)(ob, schema)
 
 
-def normalize(ob, schema, convert=normalize_of, getter=dict.get, registry=normalize_dict):
-    convert = partial(convert, registry=registry)
-    return dictify_properties(ob, schema["properties"], convert=convert, getter=getter)
+def jsonify(ob, schema, convert=jsonify_of, registry=jsonify_dict):
+    return DictWalker(convert, getattr, registry=registry)(ob, schema)
 
 
-def prepare(ob, schema, convert=prepare_of, getter=dict.get, registry=prepare_dict):
-    convert = partial(convert, registry=registry)
-    return dictify_properties(ob, schema["properties"], convert=convert, getter=getter)
+def normalize(ob, schema, convert=normalize_of, registry=normalize_dict):
+    return DictWalker(convert, dict.get, registry=registry)(ob, schema)
 
 
-def dictify_properties(ob, properties, convert, getter, marker=marker):
-    if ob is None:
-        return None
-    D = {}
-    for k, v in properties.items():
-        val = _dictify(ob, k, v, convert, getter)
-        if val is not marker:
-            D[k] = val
-    return D
-
-
-def _dictify(ob, name, schema, convert, getter):
-    type_ = schema.get("type")
-    if type_ == "array":
-        return [dictify_properties(e, schema["items"], convert, getter) for e in getter(ob, name, [])]
-    elif type_ is None:
-        return dictify_properties(getter(ob, name), schema, convert, getter)
-    elif type_ == "object":
-        return dictify_properties(getter(ob, name), schema["properties"], convert, getter)
-    else:
-        return convert(ob, name, (type_, schema.get("format")))
+def prepare(ob, schema, convert=prepare_of, registry=prepare_dict):
+    return DictWalker(convert, dict.get, registry=registry)(ob, schema)
 
 
 class ModelLookup(object):
