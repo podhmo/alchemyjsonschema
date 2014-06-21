@@ -94,6 +94,20 @@ def test_properties__include_ManytoOne_backref():
                                                             'pk': {'description': 'primary key', 'type': 'integer'}}}
 
 
+def test_properties__include_ManytoOne_backref__bidirectional_is_true():
+    from alchemyjsonschema import AlsoChildrenWalker, ChildFactory
+    target = _makeOne(AlsoChildrenWalker, child_factory=ChildFactory(".", bidirectional=True))
+    result = target(Group)
+
+    assert "required" in result
+    assert list(sorted(result["properties"])) == ["name", "pk", "users"]
+    assert result["properties"]["users"] == {"type": "array", "items": {"$ref": "#/definitions/User"}}
+    assert result["definitions"]["User"] == {"type": "object", 'required': ['pk', 'name'],
+                                             "properties": {'name': {'maxLength': 255, 'type': 'string'},
+                                                            'group': {'$ref': '#/definitions/Group'},
+                                                            'pk': {'description': 'primary key', 'type': 'integer'}}}
+
+
 # depth
 class A0(Base):
     __tablename__ = "A0"

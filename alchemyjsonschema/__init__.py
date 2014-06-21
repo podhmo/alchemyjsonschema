@@ -254,8 +254,9 @@ class CollectionForOverrides(object):
 
 
 class ChildFactory(object):
-    def __init__(self, splitter="."):
+    def __init__(self, splitter=".", bidirectional=False):
         self.splitter = splitter
+        self.bidirectional = bidirectional
 
     def default_excludes(self, prop):
         return [prop.back_populates, prop.backref]
@@ -268,7 +269,8 @@ class ChildFactory(object):
     def child_walker(self, prop, walker, history=None):
         name = prop.key
         excludes = get_children(name, walker.includes, splitter=self.splitter, default=[])
-        excludes.extend(self.default_excludes(prop))
+        if not self.bidirectional:
+            excludes.extend(self.default_excludes(prop))
         includes = get_children(name, walker.includes, splitter=self.splitter)
 
         return walker.clone(name, prop.mapper, includes=includes, excludes=excludes, history=history)
