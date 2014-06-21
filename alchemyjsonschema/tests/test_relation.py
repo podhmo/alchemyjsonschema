@@ -78,7 +78,7 @@ def test_properties__include_OnetoMany_relation2():
 
     assert "required" in result
     assert list(sorted(result["properties"])) == ["group_id", "name", "pk"]
-    assert result["properties"]["group_id"] == {'type': 'integer'}
+    assert result["properties"]["group_id"] == {'type': 'integer', "relation": "group"}
 
 
 def test_properties__include_ManytoOne_backref():
@@ -226,4 +226,4 @@ def test_properties__infinite_loop2():
     assert "required" in result
     assert list(sorted(result["properties"])) == ["id", "y_id"]
 
-    assert result["properties"]["y_id"] == {"type": "integer"}
+    assert result["properties"]["y_id"] == {"type": "integer", "relation": "ys"}

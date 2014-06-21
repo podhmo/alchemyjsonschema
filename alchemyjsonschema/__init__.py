@@ -11,6 +11,8 @@ from sqlalchemy.sql.visitors import VisitableType
 from sqlalchemy.orm.base import ONETOMANY, MANYTOONE, MANYTOMANY
 from sqlalchemy.sql.type_api import TypeEngine
 
+EMPTY_DICT = {}
+
 
 class InvalidStatus(Exception):
     pass
@@ -286,9 +288,9 @@ IMMEDIATE = "immediate"
 class RelationDesicion(object):
     def desicion(self, walker, prop, toplevel):
         if hasattr(prop, "mapper"):
-            yield RELATIONSHIP, prop
+            yield RELATIONSHIP, prop, EMPTY_DICT
         elif hasattr(prop, "columns"):
-            yield FOREIGNKEY, prop
+            yield FOREIGNKEY, prop, EMPTY_DICT
         else:
             raise NotImplemented(prop)
 
@@ -299,19 +301,19 @@ class ComfortableDesicion(object):
             if prop.direction == MANYTOONE:
                 if toplevel:
                     for c in prop.local_columns:
-                        yield FOREIGNKEY, walker.mapper._props[c.name]
+                        yield FOREIGNKEY, walker.mapper._props[c.name], {"relation": prop.key}
                 else:
                     rp = walker.history[0]
                     if prop.local_columns != rp.remote_side:
                         for c in prop.local_columns:
-                            yield FOREIGNKEY, walker.mapper._props[c.name]
+                            yield FOREIGNKEY, walker.mapper._props[c.name], {"relation": prop.key}
             elif prop.direction == MANYTOMANY:
                 # logger.warn("skip mapper=%s, prop=%s is many to many.", walker.mapper, prop)
-                yield {"type": "array", "items": {"type": "string"}}, prop
+                yield {"type": "array", "items": {"type": "string"}}, prop, EMPTY_DICT
             else:
-                yield RELATIONSHIP, prop
+                yield RELATIONSHIP, prop, EMPTY_DICT
         elif hasattr(prop, "columns"):
-            yield FOREIGNKEY, prop
+            yield FOREIGNKEY, prop, EMPTY_DICT
         else:
             raise NotImplemented(prop)
 
@@ -382,7 +384,7 @@ class SchemaFactory(object):
             history = []
 
         for prop in walker.walk():
-            for action, prop in self.relation_decision.desicion(walker, prop, toplevel):
+            for action, prop, opts in self.relation_decision.desicion(walker, prop, toplevel):
                 if action == RELATIONSHIP:     # RelationshipProperty
                     history.append(prop)
                     subwalker = self.child_factory.child_walker(prop, walker, history=history)
@@ -403,7 +405,8 @@ class SchemaFactory(object):
 
                             if c.name in overrides:
                                 overrides.overrides(sub)
-
+                            if opts:
+                                sub.update(opts)
                             D[c.name] = sub
                         else:
                             raise NotImplemented
