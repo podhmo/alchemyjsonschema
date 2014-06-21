@@ -89,9 +89,9 @@ def test_properties__include_ManytoOne_backref():
     assert "required" in result
     assert list(sorted(result["properties"])) == ["name", "pk", "users"]
     assert result["properties"]["users"] == {"type": "array", "items": {"$ref": "#/definitions/User"}}
-    assert result["definitions"]["User"] == {"type": "object", "properties": {'name': {'maxLength': 255, 'type': 'string'},
-                                                    'pk': {'description': 'primary key', 'type': 'integer'}}}
-
+    assert result["definitions"]["User"] == {"type": "object", 'required': ['pk', 'name'],
+                                             "properties": {'name': {'maxLength': 255, 'type': 'string'},
+                                                            'pk': {'description': 'primary key', 'type': 'integer'}}}
 
 
 # depth

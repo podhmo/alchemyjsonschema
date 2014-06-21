@@ -362,17 +362,20 @@ class SchemaFactory(object):
             if fn is not None:
                 fn(column, D)
 
-    def _add_property_with_reference(self, root_schema, current_schema, prop, val):
+    def _add_property_with_reference(self, walker, root_schema, current_schema, prop, val):
         clsname = prop.mapper.class_.__name__
         if "definitions" not in root_schema:
             root_schema["definitions"] = {}
+
         if val["type"] == "object":
             current_schema[prop.key] = {"$ref": "#/definitions/{}".format(clsname)}
+            val["required"] = self._detect_required(walker)
             root_schema["definitions"][clsname] = val
         else:  # array
             current_schema[prop.key] = {"type": "array", "items": {"$ref": "#/definitions/{}".format(clsname)}}
             val["type"] = "object"
             val["properties"] = val.pop("items")
+            val["required"] = self._detect_required(walker)
             root_schema["definitions"][clsname] = val
 
     def _build_properties(self, walker, root_schema, overrides, depth=None, history=None, toplevel=True):
@@ -390,7 +393,7 @@ class SchemaFactory(object):
                     subwalker = self.child_factory.child_walker(prop, walker, history=history)
                     suboverrides = self.child_factory.child_overrides(prop, overrides)
                     value = self.child_factory.child_schema(prop, self, root_schema, subwalker, suboverrides, depth=depth, history=history)
-                    self._add_property_with_reference(root_schema, D, prop, value)
+                    self._add_property_with_reference(walker, root_schema, D, prop, value)
                     history.pop()
                 elif action == FOREIGNKEY:  # ColumnProperty
                     for c in prop.columns:
