@@ -54,14 +54,6 @@ def test_properties__are__all_of_columns():
     assert list(sorted(result["properties"].keys())) == ["color", "name", "pk"]
 
 
-def test_required__are__nullable_is_false_columns():
-    target = _makeOne()
-    result = target(Group)
-
-    assert "required" in result
-    assert list(sorted(result["required"])) == ["name", "pk"]
-
-
 def test_title__id__model_class_name():
     target = _makeOne()
     result = target(Group)

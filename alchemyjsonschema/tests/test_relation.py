@@ -43,24 +43,6 @@ def test_properties__default__includes__foreign_keys():
     assert list(sorted(result["properties"].keys())) == ["group_id", "name", "pk"]
 
 
-def test_required__are_foreignKey_and_nullable_is_false():
-    from alchemyjsonschema import SingleModelWalker
-    target = _makeOne(SingleModelWalker)
-    result = target(User)
-
-    assert "required" in result
-    assert list(sorted(result["required"])) == ["group_id", "pk"]
-
-
-def test_properties__only_onesself__not_includes__foreign_keys():
-    from alchemyjsonschema import OneModelOnlyWalker
-    target = _makeOne(OneModelOnlyWalker)
-    result = target(User)
-
-    assert "required" in result
-    assert list(sorted(result["properties"])) == ["name", "pk"]
-
-
 def test_properties__include_OnetoMany_relation():
     from alchemyjsonschema import AlsoChildrenWalker, RelationDesicion
     target = _makeOne(AlsoChildrenWalker, relation_decision=RelationDesicion())
@@ -89,7 +71,7 @@ def test_properties__include_ManytoOne_backref():
     assert "required" in result
     assert list(sorted(result["properties"])) == ["name", "pk", "users"]
     assert result["properties"]["users"] == {"type": "array", "items": {"$ref": "#/definitions/User"}}
-    assert result["definitions"]["User"] == {"type": "object", 'required': ['pk', 'name'],
+    assert result["definitions"]["User"] == {"type": "object", 'required': ['pk'],
                                              "properties": {'name': {'maxLength': 255, 'type': 'string'},
                                                             'pk': {'description': 'primary key', 'type': 'integer'}}}
 
@@ -102,7 +84,7 @@ def test_properties__include_ManytoOne_backref__bidirectional_is_true():
     assert "required" in result
     assert list(sorted(result["properties"])) == ["name", "pk", "users"]
     assert result["properties"]["users"] == {"type": "array", "items": {"$ref": "#/definitions/User"}}
-    assert result["definitions"]["User"] == {"type": "object", 'required': ['pk', 'name'],
+    assert result["definitions"]["User"] == {"type": "object", 'required': ['pk'],
                                              "properties": {'name': {'maxLength': 255, 'type': 'string'},
                                                             'group': {'$ref': '#/definitions/Group'},
                                                             'pk': {'description': 'primary key', 'type': 'integer'}}}

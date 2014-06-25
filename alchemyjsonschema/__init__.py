@@ -421,4 +421,12 @@ class SchemaFactory(object):
         return D
 
     def _detect_required(self, walker):
-        return [prop.key for prop in walker.walk() if any(not c.nullable for c in getattr(prop, "columns", Empty))]
+        r = []
+        for prop in walker.walk():
+            columns = getattr(prop, "columns", Empty)
+            print(prop.key)
+            for c in columns:
+                print(c.nullable, c.default)
+            if any(not c.nullable and c.default is None for c in columns):
+                r.append(prop.key)
+        return r
