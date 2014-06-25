@@ -424,9 +424,6 @@ class SchemaFactory(object):
         r = []
         for prop in walker.walk():
             columns = getattr(prop, "columns", Empty)
-            print(prop.key)
-            for c in columns:
-                print(c.nullable, c.default)
             if any(not c.nullable and c.default is None for c in columns):
                 r.append(prop.key)
         return r
