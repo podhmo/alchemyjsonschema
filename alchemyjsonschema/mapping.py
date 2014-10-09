@@ -62,7 +62,7 @@ class Mapping(object):
         return objectify(params, self.schema, self.modellookup, strict=strict)
 
     def validate_jsondict(self, jsondict):
-        return validate(jsondict, self.schema, format_checker=self.format_checker)
+        return self.validator.validate(jsondict, self.schema)
 
     def validate_all_jsondict(self, jsondict):
         return validate_all(jsondict, self.validator, self.treat_error)
