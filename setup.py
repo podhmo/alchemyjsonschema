@@ -46,7 +46,7 @@ class PyTest(TestCommand):
 
 setup(name='alchemyjsonschema',
       version='0.2.1.1',
-      description='mappeing jsonschema for sqlalchemy models',
+      description='mapping jsonschema for sqlalchemy models',
       long_description=README + '\n\n' +  CHANGES,
       classifiers=[
         "Programming Language :: Python",
