@@ -46,8 +46,8 @@ class Mapping(object):
         self.registry = registry
         self.treat_error = treat_error
 
-    def jsondict_from_object(self, ob):
-        return jsonify(ob, self.schema, registry=self.registry.jsonify)
+    def jsondict_from_object(self, ob, verbose=False):
+        return jsonify(ob, self.schema, registry=self.registry.jsonify, verbose=verbose)
 
     def jsondict_from_string_only_dict(self, string_only_dict):
         return prepare(string_only_dict, self.schema, registry=self.registry.prepare)

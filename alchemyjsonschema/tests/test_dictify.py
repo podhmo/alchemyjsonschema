@@ -16,6 +16,7 @@ def _callFUT3(*args, **kwargs):
 
 def _callFUT4(*args, **kwargs):
     from alchemyjsonschema.dictify import jsonify
+    kwargs["verbose"] = True
     return jsonify(*args, **kwargs)
 
 

@@ -53,7 +53,7 @@ def test_it__jsondict_from_model():
     group = Group(name="ravenclaw", color="blue", created_at=_datetime(2000, 1, 1, 10, 0, 0, 0))
     group.users = [User(name="foo", created_at=_datetime(2000, 1, 1, 10, 0, 0, 0))]
 
-    jsondict = target.jsondict_from_object(group)
+    jsondict = target.jsondict_from_object(group, verbose=True)
 
     import json
     assert json.dumps(jsondict)

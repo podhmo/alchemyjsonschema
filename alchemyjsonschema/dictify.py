@@ -176,8 +176,10 @@ def dictify(ob, schema, convert=attribute_of):
     return DictWalker(schema, convert, getattr)(ob)
 
 
-def jsonify(ob, schema, convert=jsonify_of, registry=jsonify_dict):
-    return DictWalker(schema, convert, getattr, registry=registry)(ob)
+def jsonify(ob, schema, convert=jsonify_of, registry=jsonify_dict, verbose=False):
+    # if verbose option is True, response has None value attributes.
+    _marker = marker if verbose else None
+    return DictWalker(schema, convert, getattr, registry=registry, marker=_marker)(ob)
 
 
 def normalize(ob, schema, convert=normalize_of, registry=normalize_dict):
