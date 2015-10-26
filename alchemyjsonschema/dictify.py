@@ -177,7 +177,8 @@ def dictify(ob, schema, convert=attribute_of):
 
 
 def jsonify(ob, schema, convert=jsonify_of, registry=jsonify_dict):
-    return DictWalker(schema, convert, getattr, registry=registry)(ob)
+    return DictWalker(schema, convert, getattr, registry=registry,
+                      marker=None)(ob)
 
 
 def normalize(ob, schema, convert=normalize_of, registry=normalize_dict):
