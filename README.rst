@@ -111,23 +111,26 @@ help
 
 .. code:: bash
 
-    $ alchemyjsonschema -h
+    $ alchemyjsonschema --help
     usage: alchemyjsonschema [-h]
                              [--walker {noforeignkey,foreignkey,structual,control}]
-                             [--depth DEPTH]
+                             [--decision {default,comfortable}] [--depth DEPTH]
                              [--decision-relationship DECISION_RELATIONSHIP]
                              [--decision-foreignkey DECISION_FOREIGNKEY]
-                             model
+                             [--out-dir OUT_DIR]
+                             target
 
     positional arguments:
-      model
+      target                the module or class to extract schemas from
 
     optional arguments:
       -h, --help            show this help message and exit
       --walker {noforeignkey,foreignkey,structual,control}
+      --decision {default,comfortable}
       --depth DEPTH
       --decision-relationship DECISION_RELATIONSHIP
       --decision-foreignkey DECISION_FOREIGNKEY
+      --out-dir OUT_DIR
 
 target models
 
