@@ -52,6 +52,7 @@ jsonify_dict = {('string', None): maybe_wrap(text_),
                 ('string', 'time',): maybe_wrap(isoformat),
                 ('number', None): maybe_wrap(float),
                 ('integer', None): maybe_wrap(int),
+                ('integer', 'int64'): maybe_wrap(long),  # this isn't precisely enough...
                 ('boolean', None): maybe_wrap(bool),
                 ('string', 'date-time'): maybe_wrap(datetime_rfc3339),
                 ('string', 'date'): maybe_wrap(isoformat0),
