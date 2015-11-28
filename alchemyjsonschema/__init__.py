@@ -94,19 +94,41 @@ default_restriction_dict = {
 
 
 class Classifier(object):
-    def __init__(self, mapping=default_column_to_schema):
+    def __init__(self, mapping=default_column_to_schema, see_mro=True, see_impl=True):
         self.mapping = mapping
+        self.see_mro = see_mro
+        self.see_impl = see_impl
 
     def __getitem__(self, k):
         cls = k.__class__
-        v = self.mapping.get(cls)
-        if v is not None:
-            return cls, v
-        # inheritance
-        for type_ in self.mapping:
-            if issubclass(cls, type_):
-                return type_, self.mapping[type_]
-        raise InvalidStatus("notfound: {k}".format(k=k))
+        _, mapped = get_class_mapping(self.mapping, cls, see_mro=self.see_mro, see_impl=self.see_impl)
+        if mapped is None:
+            raise InvalidStatus("notfound: {k}. (cls={cls})".format(k=k, cls=cls))
+        return cls, mapped
+
+
+def get_class_mapping(mapping, cls, see_mro=True, see_impl=True):
+    v = mapping.get(cls)
+    if v is not None:
+        return cls, v
+
+    # inheritance
+    if see_mro:
+        for type_ in cls.mro()[1:]:
+            if type_ is TypeEngine:
+                break
+            if type_ in mapping:
+                return type_, mapping[type_]
+
+    # type decorator
+    if see_impl and hasattr(cls, "impl"):
+        impl = cls.impl
+        if not callable(impl):
+            # If the class level impl is not a callable (the unusual case),
+            impl = impl.__class__
+        return get_class_mapping(mapping, impl, see_mro=see_mro, see_impl=see_impl)
+    return None, None
+
 
 DefaultClassfier = Classifier(default_column_to_schema)
 Empty = ()
@@ -330,7 +352,7 @@ class SchemaFactory(object):
         self.container_factory = container_factory
         self.classifier = classifier
         self.walker = walker  # class
-        self.restriction_dict = restriction_dict
+        self.restriction_set = [{k: v} for k, v in restriction_dict.items()]
         self.child_factory = child_factory
         self.relation_decision = relation_decision
 
@@ -357,12 +379,14 @@ class SchemaFactory(object):
         return schema
 
     def _add_restriction_if_found(self, D, column, itype):
-        for tcls in itype.__mro__:
-            if tcls is TypeEngine:
-                break
-            fn = self.restriction_dict.get(tcls)
+        for restriction_dict in self.restriction_set:
+            _, fn = get_class_mapping(restriction_dict, itype, see_impl=self.classifier.see_impl, see_mro=self.classifier.see_mro)
             if fn is not None:
-                fn(column, D)
+                if isinstance(fn, (list, tuple)):
+                    for f in fn:
+                        f(column, D)
+                else:
+                    fn(column, D)
 
     def _add_property_with_reference(self, walker, root_schema, current_schema, prop, val):
         clsname = prop.mapper.class_.__name__
