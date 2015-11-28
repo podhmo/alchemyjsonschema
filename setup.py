@@ -45,15 +45,15 @@ class PyTest(TestCommand):
 
 
 setup(name='alchemyjsonschema',
-      version='0.2.1.1',
+      version='0.2.3',
       description='mapping jsonschema for sqlalchemy models',
       long_description=README + '\n\n' +  CHANGES,
       classifiers=[
         "Programming Language :: Python",
         "Programming Language :: Python :: Implementation :: CPython",
         ],
-      keywords='',
-      author="",
+      keywords='alchemyjsonschema sqlalchemy jsonschema schema-generation',
+      author="podhmo",
       author_email="",
       url="https://github.com/podhmo/alchemyjsonschema",
       packages=find_packages(),
