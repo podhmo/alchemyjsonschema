@@ -63,8 +63,19 @@ def handle_output(schema, name, outdir=None):
         write_output_file(schema, name, outdir)
 
 
+def is_alchemy_model(maybe_model):
+    return hasattr(maybe_model, "__table__") or hasattr(maybe_model, "__tablename__")
+
+
+def get_model_name_list(module):
+    if hasattr(module, "__all__"):
+        return module.__all__
+    else:
+        return [name for name, value in module.__dict__.items() if is_alchemy_model(value)]
+
+
 def run(walker, model=None, module=None, depth=None,
-        relation_decision=None, outdir=None, definitions=None):
+        relation_decision=None, outdir=None, definition_name=None):
     make_schema = SchemaFactory(walker, relation_decision=relation_decision)
 
     if model is not None:
@@ -75,20 +86,21 @@ def run(walker, model=None, module=None, depth=None,
     elif module is not None:
         # iterate over attributes of module looking for orm objects
         definitions = {}
-        for name in module.__all__:
+        for name in get_model_name_list(module):
             basemodel = getattr(module, name)
             schema = make_schema(basemodel, depth=depth)
             definitions[schema['title']] = schema
-            del definitions[schema['title']]['definitions']
-            if definitions is None:
+            if definition_name is None:
                 handle_output(json.dumps(schema, indent=2, ensure_ascii=False),
                               basemodel.__tablename__ + ".json", outdir=outdir)
+
         # create a single definitions file, such as a swagger spec might use
-        if definitions is not None:
-            if outdir is None:
-                outdir = "./"
+        if definition_name is not None:
+            outdir = outdir or "."
+            for schema in definitions.values():
+                schema.pop('definitions', None)
             handle_output(json.dumps({"definitions": definitions}, indent=2, ensure_ascii=False),
-                          "_definitions.json", outdir=outdir)
+                          definition_name, outdir=outdir)
     else:
         print("Error: Target was neither a model nor a module.")
 
@@ -119,4 +131,4 @@ def main(sys_args=sys.argv[1:]):
     return run(walker, model=model,
                module=module, depth=args.depth,
                relation_decision=detect_decision(args.decision),
-               outdir=args.out_dir, definitions=args.definitions)
+               outdir=args.out_dir, definition_name=args.definitions)
