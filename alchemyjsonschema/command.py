@@ -90,7 +90,7 @@ def run(walker, model=None, module=None, depth=None,
             handle_output(json.dumps({"definitions": definitions}, indent=2, ensure_ascii=False),
                           "_definitions.json", outdir=outdir)
     else:
-        print "Error: Target was neither a model nor a module."
+        print("Error: Target was neither a model nor a module.")
 
 
 def main(sys_args=sys.argv[1:]):
