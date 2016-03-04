@@ -3,5 +3,4 @@ sudo: false
 python: 3.5
 install:
   - pip install -e .[testing]
-python:
-  - script setup.py test
+script: python setup.py test
