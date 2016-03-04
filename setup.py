@@ -66,6 +66,7 @@ setup(name='alchemyjsonschema',
           },
       tests_require = tests_require,
       cmdclass = {'test': PyTest},
+      license="mit",
       entry_points = """
       [console_scripts]
       alchemyjsonschema = alchemyjsonschema.command:main
