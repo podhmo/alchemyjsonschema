@@ -49,23 +49,22 @@ def detect_decision(x):
         raise Exception(x)
 
 
-def write_output_file(schema, model, outdir):
-    fname = model.__tablename__ + ".json"
-    schemaf = outdir + "/" + fname
+def write_output_file(schema, name, outdir):
+    schemaf = outdir + "/" + name
     f = open(schemaf, 'w')
     f.write(schema)
     f.close()
 
 
-def handle_output(schema, model, outdir=None):
+def handle_output(schema, name, outdir=None):
     if outdir is None:
         print(schema)
     else:
-        write_output_file(schema, model, outdir)
+        write_output_file(schema, name, outdir)
 
 
 def run(walker, model=None, module=None, depth=None,
-        relation_decision=None, outdir=None):
+        relation_decision=None, outdir=None, definitions=None):
     make_schema = SchemaFactory(walker, relation_decision=relation_decision)
 
     if model is not None:
@@ -75,11 +74,21 @@ def run(walker, model=None, module=None, depth=None,
                       model, outdir=outdir)
     elif module is not None:
         # iterate over attributes of module looking for orm objects
+        definitions = {}
         for name in module.__all__:
             basemodel = getattr(module, name)
             schema = make_schema(basemodel, depth=depth)
-            handle_output(json.dumps(schema, indent=2, ensure_ascii=False),
-                          basemodel, outdir=outdir)
+            definitions[schema['title']] = schema
+            del definitions[schema['title']]['definitions']
+            if definitions is None:
+                handle_output(json.dumps(schema, indent=2, ensure_ascii=False),
+                              basemodel.__tablename__ + ".json", outdir=outdir)
+        # create a single definitions file, such as a swagger spec might use
+        if definitions is not None:
+            if outdir is None:
+                outdir = "./"
+            handle_output(json.dumps({"definitions": definitions}, indent=2, ensure_ascii=False),
+                          "_definitions.json", outdir=outdir)
     else:
         print "Error: Target was neither a model nor a module."
 
@@ -92,7 +101,8 @@ def main(sys_args=sys.argv[1:]):
     parser.add_argument("--depth", default=None, type=int)
     parser.add_argument("--decision-relationship", default="")
     parser.add_argument("--decision-foreignkey", default="")
-    parser.add_argument("--out-dir", default=None)
+    parser.add_argument("--out-dir", default=None, help='Write output to files in this directory instead of printing.')
+    parser.add_argument("--definitions", default=None, help='Instead of individual files, output all schemas as a single definitions file.')
     args = parser.parse_args(sys_args)
     model = None
     module = None
@@ -109,4 +119,4 @@ def main(sys_args=sys.argv[1:]):
     return run(walker, model=model,
                module=module, depth=args.depth,
                relation_decision=detect_decision(args.decision),
-               outdir=args.out_dir)
+               outdir=args.out_dir, definitions=args.definitions)
