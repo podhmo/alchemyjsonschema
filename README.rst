@@ -1,6 +1,9 @@
 alchemyjsonschema
 =================
 
+.. image:: https://travis-ci.org/podhmo/alchemyjsonschema.svg
+  :target: https://travis-ci.org/podhmo/alchemyjsonschema.svg
+
 .. code:: python
 
    # -*- coding:utf-8 -*-
