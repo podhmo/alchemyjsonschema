@@ -47,7 +47,7 @@ class PyTest(TestCommand):
 
 
 setup(name='alchemyjsonschema',
-      version='0.3.1.1',
+      version='0.3.2',
       description='mapping jsonschema for sqlalchemy models',
       long_description=README + '\n\n' + CHANGES,
       classifiers=[
@@ -72,4 +72,5 @@ setup(name='alchemyjsonschema',
       entry_points="""
       [console_scripts]
       alchemyjsonschema = alchemyjsonschema.command:main
-      """)
+      """
+)
