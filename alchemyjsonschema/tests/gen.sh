@@ -1,6 +1,6 @@
 #!/bin/sh
 
-cat <<EOF | sqlite3 `dirname $0`/refrection.db
+cat <<EOF | sqlite3 `dirname $0`/reflection.db
 CREATE TABLE artist(
   artistid    INTEGER PRIMARY KEY,
   artistname  TEXT
