@@ -73,5 +73,4 @@ def test_it2_(db):
         'type': 'object',
         'required': ['trackid']
     }
-    print(schema["definitions"]["artist"]["required"])
-    # assert schema == expected
+    assert schema == expected
