@@ -51,7 +51,7 @@ def test_it(db):
     assert schema == expected
 
 
-def test_it2_(db):
+def test_it2(db):
     target = _makeOne()
     schema = target(db.classes.track)
     expected = {
