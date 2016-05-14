@@ -38,6 +38,10 @@ class User(Base):
     group = orm.relationship(Group, uselist=False, backref="users")
 
 
+class AnotherUser(Base):
+    __table__ = User.__table__
+
+
 def test_it_create_schema__and__valid_params__sucess():
     from jsonschema import validate
 
@@ -48,7 +52,7 @@ def test_it_create_schema__and__valid_params__sucess():
     validate(data, schema)
 
 
-def test_it_creat_schema__and__invalid_params__failure():
+def test_it_create_schema__and__invalid_params__failure():
     import pytest
     from jsonschema import validate
     from jsonschema.exceptions import ValidationError
@@ -80,3 +84,10 @@ def test_it_jsonify_data__that_is_valid_params():
     user = User(name="foo", group=Group(name="ravenclaw", color="blue", pk=1))
     jsondict = jsonify(user, schema)
     validate(jsondict, schema)
+
+
+def test_create_schema__without_tablename():
+    """can generate schema with model(without __tablename__)"""
+    target = _makeOne()
+    schema = target(AnotherUser)
+    assert schema
