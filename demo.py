@@ -7,7 +7,6 @@ Base = declarative_base()
 
 
 class Group(Base):
-    """model for test"""
     __tablename__ = "Group"
 
     pk = sa.Column(sa.Integer, primary_key=True, doc="primary key")

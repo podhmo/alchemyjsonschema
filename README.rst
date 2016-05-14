@@ -168,16 +168,17 @@ dump schema (commandline)
 
     {
       "required": [
-        "pk",
-        "name"
+        "pk"
       ],
       "definitions": {
         "User": {
-          "type": "object",
+          "required": [
+            "pk"
+          ],
           "properties": {
             "pk": {
-              "type": "integer",
-              "description": "primary key"
+              "description": "primary key",
+              "type": "integer"
             },
             "name": {
               "maxLength": 255,
@@ -187,15 +188,14 @@ dump schema (commandline)
               "format": "date-time",
               "type": "string"
             }
-          }
+          },
+          "type": "object"
         }
       },
-      "title": "Group",
-      "type": "object",
       "properties": {
         "pk": {
-          "type": "integer",
-          "description": "primary key"
+          "description": "primary key",
+          "type": "integer"
         },
         "name": {
           "maxLength": 255,
@@ -221,5 +221,7 @@ dump schema (commandline)
           },
           "type": "array"
         }
-      }
+      },
+      "title": "Group",
+      "type": "object"
     }
