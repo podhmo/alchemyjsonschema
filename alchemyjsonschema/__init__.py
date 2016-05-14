@@ -147,6 +147,9 @@ class BaseModelWalker(object):
     def clone(self, name, mapper, includes, excludes, history):
         return self.__class__(mapper, includes, excludes, history)
 
+    def from_child(self, model):
+        return self.__class__(model, history=self.history)
+
 # mapper.column_attrs and mapper.attrs is not ordered. define our custom iterate function `iterate'
 
 
@@ -395,13 +398,13 @@ class SchemaFactory(object):
 
         if val["type"] == "object":
             current_schema[prop.key] = {"$ref": "#/definitions/{}".format(clsname)}
-            val["required"] = self._detect_required(walker)
+            val["required"] = self._detect_required(walker.from_child(prop.mapper))
             root_schema["definitions"][clsname] = val
         else:  # array
             current_schema[prop.key] = {"type": "array", "items": {"$ref": "#/definitions/{}".format(clsname)}}
             val["type"] = "object"
             val["properties"] = val.pop("items")
-            val["required"] = self._detect_required(walker)
+            val["required"] = self._detect_required(walker.from_child(prop.mapper))
             root_schema["definitions"][clsname] = val
 
     def _build_properties(self, walker, root_schema, overrides, depth=None, history=None, toplevel=True):
