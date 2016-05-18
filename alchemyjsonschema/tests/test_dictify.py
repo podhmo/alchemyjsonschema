@@ -157,4 +157,3 @@ def test_it__jsonify():
     assert result == {'name': 'ravenclaw', 'created_at': '2000-01-01T00:00:00+00:00', 'color': 'blue', 'pk': None,
                       'users': [{'name': 'foo', 'created_at': '2000-01-01T00:00:00+00:00', 'pk': None},
                                 {'name': 'boo', 'created_at': '2000-01-01T00:00:00+00:00', 'pk': None}]}
-

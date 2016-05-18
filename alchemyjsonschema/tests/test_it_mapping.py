@@ -128,4 +128,3 @@ def test_it__object_from_dict():
     assert group.users[0].name == "foo"
     assert group.users[0].pk is None
     assert group.users[0].created_at == _datetime(2000, 1, 1, 10, 0, 0, 0)
-
