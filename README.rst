@@ -4,6 +4,30 @@ alchemyjsonschema
 .. image:: https://travis-ci.org/podhmo/alchemyjsonschema.svg
   :target: https://travis-ci.org/podhmo/alchemyjsonschema.svg
 
+features
+----------------------------------------
+
+alchemyjsonschema is the library for converting sqlalchemys's model to jsonschema.
+
+- using alchemyjsonschema as command
+- using alchemyjsonschema as library
+
+as library
+----------------------------------------
+
+having three output styles.
+
+- NoForeignKeyWalker -- ignore relationships
+- ForeignKeyWalker -- expecting the information about relationship is foreign key
+- StructuralWalker -- fullset output(expecting the information about relationship is full JSON data)
+
+examples
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+dumping json with above three output styles.
+
+target models are here. Group and User.
+
 .. code:: python
 
    # -*- coding:utf-8 -*-
@@ -31,7 +55,32 @@ alchemyjsonschema
        group = orm.relationship(Group, uselist=False, backref="users")
 
 
-   ## ------ForeignKeyWalker--------
+NoForeignKeyWalker
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code:: python
+
+   import pprint as pp
+   from alchemyjsonschema import SchemaFactory
+   from alchemyjsonschema import NoForeignKeyWalker
+
+   factory = SchemaFactory(NoForeignKeyWalker)
+   pp.pprint(factory(User))
+
+   """
+   {'properties': {'name': {'maxLength': 255, 'type': 'string'},
+                   'pk': {'description': 'primary key', 'type': 'integer'}},
+    'required': ['pk'],
+    'title': 'User',
+    'type': 'object'}
+   """
+
+
+ForeignKeyWalker
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. code:: python
+
    import pprint as pp
    from alchemyjsonschema import SchemaFactory
    from alchemyjsonschema import ForeignKeyWalker
@@ -49,24 +98,12 @@ alchemyjsonschema
    """
 
 
-   ## ------NoForeignKeyWalker--------
-   import pprint as pp
-   from alchemyjsonschema import SchemaFactory
-   from alchemyjsonschema import NoForeignKeyWalker
-
-   factory = SchemaFactory(NoForeignKeyWalker)
-   pp.pprint(factory(User))
-
-   """
-   {'properties': {'name': {'maxLength': 255, 'type': 'string'},
-                   'pk': {'description': 'primary key', 'type': 'integer'}},
-    'required': ['pk'],
-    'title': 'User',
-    'type': 'object'}
-   """
+StructuralWalker
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-   ## ------StructuralWalker--------
+.. code:: python
+
    import pprint as pp
    from alchemyjsonschema import SchemaFactory
    from alchemyjsonschema import StructuralWalker
@@ -106,21 +143,19 @@ alchemyjsonschema
     'type': 'object'}
    """
 
-
-has alchemyjsonschema command
+as command
 ----------------------------------------
+
+using alchemyjsonschema as command (the command name is also `alchemyjsonschema`).
 
 help
 
 .. code:: bash
 
     $ alchemyjsonschema --help
-    usage: alchemyjsonschema [-h]
-                             [--walker {noforeignkey,foreignkey,structual,control}]
+    usage: alchemyjsonschema [-h] [--walker {noforeignkey,foreignkey,structual}]
                              [--decision {default,fullset}] [--depth DEPTH]
-                             [--decision-relationship DECISION_RELATIONSHIP]
-                             [--decision-foreignkey DECISION_FOREIGNKEY]
-                             [--out-dir OUT_DIR]
+                             [--out OUT]
                              target
 
     positional arguments:
@@ -128,100 +163,151 @@ help
 
     optional arguments:
       -h, --help            show this help message and exit
-      --walker {noforeignkey,foreignkey,structual,control}
+      --walker {noforeignkey,foreignkey,structual}
       --decision {default,fullset}
       --depth DEPTH
-      --decision-relationship DECISION_RELATIONSHIP
-      --decision-foreignkey DECISION_FOREIGNKEY
-      --out-dir OUT_DIR
+      --out OUT             output to file
 
-target models
+If above two model definitions (User,Group) are existed in `alchemyjsonschema.tests.models` .
 
-.. code:: python
+Target is the class position or module position. for example,
 
-    class Group(Base):
-        __tablename__ = "Group"
-        query = Session.query_property()
+- class position -- `alchemyjsonschema.tests.models:User`
+- module position -- `alchemyjsonschema.tests.models`
 
-        pk = sa.Column(sa.Integer, primary_key=True, doc="primary key")
-        name = sa.Column(sa.String(255), default="", nullable=False)
-        color = sa.Column(sa.Enum("red", "green", "yellow", "blue"))
-        created_at = sa.Column(sa.DateTime, nullable=True)
+example
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-
-    class User(Base):
-        __tablename__ = "User"
-        query = Session.query_property()
-
-        pk = sa.Column(sa.Integer, primary_key=True, doc="primary key")
-        name = sa.Column(sa.String(255), default="", nullable=False)
-        group_id = sa.Column(sa.Integer, sa.ForeignKey(Group.pk), nullable=False)
-        group = orm.relationship(Group, uselist=False, backref="users")
-        created_at = sa.Column(sa.DateTime, nullable=True)
-
-
-dump schema (commandline)
+Using StructuralWalker via command line (--walker structural).
+Of course, NoForeignKeyWalker is noforeignkey, and ForeignKeyWalker is foreignkey.
 
 .. code:: bash
 
-    $ alchemyjsonschema alchemyjsonschema.tests.models:Group --walker structual
+    $ alchemyjsonschema --walker structual alchemyjsonschema.tests.models:Group
 
     {
-      "required": [
-        "pk"
-      ],
       "definitions": {
-        "User": {
-          "required": [
-            "pk"
-          ],
+        "Group": {
           "properties": {
-            "pk": {
-              "description": "primary key",
-              "type": "integer"
-            },
-            "name": {
-              "maxLength": 255,
+            "color": {
+              "enum": [
+                "red",
+                "green",
+                "yellow",
+                "blue"
+              ],
+              "maxLength": 6,
               "type": "string"
             },
             "created_at": {
               "format": "date-time",
               "type": "string"
+            },
+            "name": {
+              "maxLength": 255,
+              "type": "string"
+            },
+            "pk": {
+              "description": "primary key",
+              "type": "integer"
+            },
+            "users": {
+              "items": {
+                "$ref": "#/definitions/User"
+              },
+              "type": "array"
             }
           },
+          "required": [
+            "pk"
+          ],
+          "title": "Group",
+          "type": "object"
+        },
+        "User": {
+          "properties": {
+            "created_at": {
+              "format": "date-time",
+              "type": "string"
+            },
+            "name": {
+              "maxLength": 255,
+              "type": "string"
+            },
+            "pk": {
+              "description": "primary key",
+              "type": "integer"
+            }
+          },
+          "required": [
+            "pk"
+          ],
           "type": "object"
         }
-      },
-      "properties": {
-        "pk": {
-          "description": "primary key",
-          "type": "integer"
-        },
-        "name": {
-          "maxLength": 255,
-          "type": "string"
-        },
-        "color": {
-          "enum": [
-            "red",
-            "green",
-            "yellow",
-            "blue"
-          ],
-          "maxLength": 6,
-          "type": "string"
-        },
-        "created_at": {
-          "format": "date-time",
-          "type": "string"
-        },
-        "users": {
-          "items": {
-            "$ref": "#/definitions/User"
-          },
-          "type": "array"
-        }
-      },
-      "title": "Group",
-      "type": "object"
+      }
     }
+
+Output is not same when using Walker-class, directly. This is handy output for something like a swagger(OpenAPI 2.0)'s tool.
+
+appendix: what is `--decision` ?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+what is `--decision`? (TODO: gentle description)
+
+.. code-block:: bash
+
+   $ alchemyjsonschema --walker structual alchemyjsonschema.tests.models:User | jq . -S > /tmp/default.json
+   $ alchemyjsonschema --decision useforeignkey --walker structual alchemyjsonschema.tests.models:User | jq . -S > /tmp/useforeignkey.json
+   $ diff -u /tmp/default.json /tmp/useforeignkey.json
+
+.. code-block:: diff
+
+  --- /tmp/default.json	2017-01-02 22:49:44.000000000 +0900
+  +++ /tmp/useforeignkey.json	2017-01-02 22:53:13.000000000 +0900
+  @@ -1,43 +1,14 @@
+   {
+     "definitions": {
+  -    "Group": {
+  -      "properties": {
+  -        "color": {
+  -          "enum": [
+  -            "red",
+  -            "green",
+  -            "yellow",
+  -            "blue"
+  -          ],
+  -          "maxLength": 6,
+  -          "type": "string"
+  -        },
+  -        "created_at": {
+  -          "format": "date-time",
+  -          "type": "string"
+  -        },
+  -        "name": {
+  -          "maxLength": 255,
+  -          "type": "string"
+  -        },
+  -        "pk": {
+  -          "description": "primary key",
+  -          "type": "integer"
+  -        }
+  -      },
+  -      "required": [
+  -        "pk"
+  -      ],
+  -      "type": "object"
+  -    },
+       "User": {
+         "properties": {
+           "created_at": {
+             "format": "date-time",
+             "type": "string"
+           },
+  -        "group": {
+  -          "$ref": "#/definitions/Group"
+  +        "group_id": {
+  +          "relation": "group",
+  +          "type": "integer"
+           },
+           "name": {
+             "maxLength": 255,
