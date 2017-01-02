@@ -31,12 +31,12 @@ alchemyjsonschema
        group = orm.relationship(Group, uselist=False, backref="users")
 
 
-   ## ------SingleModelWalker--------
+   ## ------ForeignKeyWalker--------
    import pprint as pp
    from alchemyjsonschema import SchemaFactory
-   from alchemyjsonschema import SingleModelWalker
+   from alchemyjsonschema import ForeignKeyWalker
 
-   factory = SchemaFactory(SingleModelWalker)
+   factory = SchemaFactory(ForeignKeyWalker)
    pp.pprint(factory(User))
 
    """
@@ -49,12 +49,12 @@ alchemyjsonschema
    """
 
 
-   ## ------OneModelOnlyWalker--------
+   ## ------NoForeignKeyWalker--------
    import pprint as pp
    from alchemyjsonschema import SchemaFactory
-   from alchemyjsonschema import OneModelOnlyWalker
+   from alchemyjsonschema import NoForeignKeyWalker
 
-   factory = SchemaFactory(OneModelOnlyWalker)
+   factory = SchemaFactory(NoForeignKeyWalker)
    pp.pprint(factory(User))
 
    """
@@ -66,12 +66,12 @@ alchemyjsonschema
    """
 
 
-   ## ------AlsoChildrenWalker--------
+   ## ------StructuralWalker--------
    import pprint as pp
    from alchemyjsonschema import SchemaFactory
-   from alchemyjsonschema import AlsoChildrenWalker
+   from alchemyjsonschema import StructuralWalker
 
-   factory = SchemaFactory(AlsoChildrenWalker)
+   factory = SchemaFactory(StructuralWalker)
    pp.pprint(factory(User))
 
    """
@@ -117,7 +117,7 @@ help
     $ alchemyjsonschema --help
     usage: alchemyjsonschema [-h]
                              [--walker {noforeignkey,foreignkey,structual,control}]
-                             [--decision {default,comfortable}] [--depth DEPTH]
+                             [--decision {default,fullset}] [--depth DEPTH]
                              [--decision-relationship DECISION_RELATIONSHIP]
                              [--decision-foreignkey DECISION_FOREIGNKEY]
                              [--out-dir OUT_DIR]
@@ -129,7 +129,7 @@ help
     optional arguments:
       -h, --help            show this help message and exit
       --walker {noforeignkey,foreignkey,structual,control}
-      --decision {default,comfortable}
+      --decision {default,fullset}
       --depth DEPTH
       --decision-relationship DECISION_RELATIONSHIP
       --decision-foreignkey DECISION_FOREIGNKEY

@@ -8,11 +8,11 @@ import argparse
 
 from . import (
     SchemaFactory,
-    AlsoChildrenWalker,
-    OneModelOnlyWalker,
-    SingleModelWalker,
+    StructuralWalker,
+    NoForeignKeyWalker,
+    ForeignKeyWalker,
     RelationDesicion,
-    ComfortableDesicion
+    FullsetDesicion
 )
 
 
@@ -28,11 +28,11 @@ def err(x):
 
 def detect_walker(x):
     if x == "structual":
-        return AlsoChildrenWalker
+        return StructuralWalker
     elif x == "noforeignkey":
-        return OneModelOnlyWalker
+        return NoForeignKeyWalker
     elif x == "foreignkey":
-        return SingleModelWalker
+        return ForeignKeyWalker
     else:
         raise Exception(x)
 
@@ -40,8 +40,8 @@ def detect_walker(x):
 def detect_decision(x):
     if x == "default":
         return RelationDesicion()
-    elif x == "comfortable":
-        return ComfortableDesicion()
+    elif x == "fullset":
+        return FullsetDesicion()
     else:
         raise Exception(x)
 
@@ -106,7 +106,7 @@ def main(sys_args=sys.argv[1:]):
     parser = argparse.ArgumentParser()
     parser.add_argument("target", help='the module or class to extract schemas from')
     parser.add_argument("--walker", choices=["noforeignkey", "foreignkey", "structual"], default="structual")
-    parser.add_argument("--decision", choices=["default", "comfortable"], default="default")
+    parser.add_argument("--decision", choices=["default", "fullset"], default="default")
     parser.add_argument("--depth", default=None, type=int)
     parser.add_argument("--out-dir", default=None, help='Write output to files in this directory instead of printing.')
     parser.add_argument("--definitions", default=None, help='Instead of individual files, output all schemas as a single definitions file.')

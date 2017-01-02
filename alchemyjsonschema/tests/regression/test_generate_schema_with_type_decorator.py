@@ -3,8 +3,8 @@
 
 def _callFUT(*args, **kwargs):
     # see: https://github.com/podhmo/alchemyjsonschema/issues/6
-    from alchemyjsonschema import SchemaFactory, AlsoChildrenWalker
-    factory = SchemaFactory(AlsoChildrenWalker)
+    from alchemyjsonschema import SchemaFactory, StructuralWalker
+    factory = SchemaFactory(StructuralWalker)
     return factory(*args, **kwargs)
 
 

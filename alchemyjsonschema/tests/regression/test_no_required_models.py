@@ -5,10 +5,10 @@ def _callFUT(*args, **kwargs):
 
 
 def test_no_required():
-    from alchemyjsonschema import AlsoChildrenWalker, SchemaFactory
+    from alchemyjsonschema import StructuralWalker, SchemaFactory
     from alchemyjsonschema.dictify import ModelLookup
     from alchemyjsonschema.tests import models
-    schema_factory = SchemaFactory(AlsoChildrenWalker)
+    schema_factory = SchemaFactory(StructuralWalker)
     schema = schema_factory(models.MyModel, excludes=["id"])
     modellookup = ModelLookup(models)
 

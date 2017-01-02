@@ -22,12 +22,12 @@ class User(Base):
     group = orm.relationship(Group, uselist=False, backref="users")
 
 
-## ------SingleModelWalker--------
+## ------ForeignKeyWalker--------
 import pprint as pp
 from alchemyjsonschema import SchemaFactory
-from alchemyjsonschema import SingleModelWalker
+from alchemyjsonschema import ForeignKeyWalker
 
-factory = SchemaFactory(SingleModelWalker)
+factory = SchemaFactory(ForeignKeyWalker)
 pp.pprint(factory(User))
 
 """
@@ -40,12 +40,12 @@ pp.pprint(factory(User))
 """
 
 
-## ------OneModelOnlyWalker--------
+## ------NoForeignKeyWalker--------
 import pprint as pp
 from alchemyjsonschema import SchemaFactory
-from alchemyjsonschema import OneModelOnlyWalker
+from alchemyjsonschema import NoForeignKeyWalker
 
-factory = SchemaFactory(OneModelOnlyWalker)
+factory = SchemaFactory(NoForeignKeyWalker)
 pp.pprint(factory(User))
 
 """
@@ -57,12 +57,12 @@ pp.pprint(factory(User))
 """
 
 
-## ------AlsoChildrenWalker--------
+## ------StructuralWalker--------
 import pprint as pp
 from alchemyjsonschema import SchemaFactory
-from alchemyjsonschema import AlsoChildrenWalker
+from alchemyjsonschema import StructuralWalker
 
-factory = SchemaFactory(AlsoChildrenWalker)
+factory = SchemaFactory(StructuralWalker)
 pp.pprint(factory(User))
 
 """

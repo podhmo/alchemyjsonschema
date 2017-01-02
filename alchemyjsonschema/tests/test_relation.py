@@ -35,8 +35,8 @@ class User(Base):
 
 
 def test_properties__default__includes__foreign_keys():
-    from alchemyjsonschema import SingleModelWalker
-    target = _makeOne(SingleModelWalker)
+    from alchemyjsonschema import ForeignKeyWalker
+    target = _makeOne(ForeignKeyWalker)
     result = target(User)
 
     assert "properties" in result
@@ -44,8 +44,8 @@ def test_properties__default__includes__foreign_keys():
 
 
 def test_properties__include_OnetoMany_relation():
-    from alchemyjsonschema import AlsoChildrenWalker, RelationDesicion
-    target = _makeOne(AlsoChildrenWalker, relation_decision=RelationDesicion())
+    from alchemyjsonschema import StructuralWalker, RelationDesicion
+    target = _makeOne(StructuralWalker, relation_decision=RelationDesicion())
     result = target(User)
 
     assert "required" in result
@@ -54,8 +54,8 @@ def test_properties__include_OnetoMany_relation():
 
 
 def test_properties__include_OnetoMany_relation2():
-    from alchemyjsonschema import AlsoChildrenWalker, ComfortableDesicion
-    target = _makeOne(AlsoChildrenWalker, relation_decision=ComfortableDesicion())
+    from alchemyjsonschema import StructuralWalker, FullsetDesicion
+    target = _makeOne(StructuralWalker, relation_decision=FullsetDesicion())
     result = target(User)
 
     assert "required" in result
@@ -64,8 +64,8 @@ def test_properties__include_OnetoMany_relation2():
 
 
 def test_properties__include_ManytoOne_backref():
-    from alchemyjsonschema import AlsoChildrenWalker
-    target = _makeOne(AlsoChildrenWalker)
+    from alchemyjsonschema import StructuralWalker
+    target = _makeOne(StructuralWalker)
     result = target(Group)
 
     assert "required" in result
@@ -77,8 +77,8 @@ def test_properties__include_ManytoOne_backref():
 
 
 def test_properties__include_ManytoOne_backref__bidirectional_is_true():
-    from alchemyjsonschema import AlsoChildrenWalker, ChildFactory
-    target = _makeOne(AlsoChildrenWalker, child_factory=ChildFactory(".", bidirectional=True))
+    from alchemyjsonschema import StructuralWalker, ChildFactory
+    target = _makeOne(StructuralWalker, child_factory=ChildFactory(".", bidirectional=True))
     result = target(Group)
 
     assert "required" in result
@@ -138,9 +138,9 @@ class A5(Base):
 
 
 def test_properties__default_depth_is__traverse_all_chlidren():
-    from alchemyjsonschema import AlsoChildrenWalker
+    from alchemyjsonschema import StructuralWalker
     from alchemyjsonschema.dictify import get_reference
-    target = _makeOne(AlsoChildrenWalker)
+    target = _makeOne(StructuralWalker)
     result = target(A0)
 
     assert "required" in result
@@ -154,9 +154,9 @@ def test_properties__default_depth_is__traverse_all_chlidren():
 
 
 def test_properties__default_depth_is__2__traverse_depth2():
-    from alchemyjsonschema import AlsoChildrenWalker
+    from alchemyjsonschema import StructuralWalker
     from alchemyjsonschema.dictify import get_reference
-    target = _makeOne(AlsoChildrenWalker)
+    target = _makeOne(StructuralWalker)
     result = target(A0, depth=2)
 
     assert "required" in result
@@ -166,9 +166,9 @@ def test_properties__default_depth_is__2__traverse_depth2():
 
 
 def test_properties__default_depth_is__3__traverse_depth3():
-    from alchemyjsonschema import AlsoChildrenWalker
+    from alchemyjsonschema import StructuralWalker
     from alchemyjsonschema.dictify import get_reference
-    target = _makeOne(AlsoChildrenWalker)
+    target = _makeOne(StructuralWalker)
     result = target(A0, depth=3)
 
     assert "required" in result
@@ -203,9 +203,9 @@ class Z(Base):
 
 
 def test_properties__infinite_loop():
-    from alchemyjsonschema import AlsoChildrenWalker, RelationDesicion
+    from alchemyjsonschema import StructuralWalker, RelationDesicion
     from alchemyjsonschema.dictify import get_reference
-    target = _makeOne(AlsoChildrenWalker, relation_decision=RelationDesicion())
+    target = _makeOne(StructuralWalker, relation_decision=RelationDesicion())
     result = target(X)
     ys = result["properties"]["ys"]
     zs = get_reference(ys, result)["properties"]["zs"]
@@ -216,8 +216,8 @@ def test_properties__infinite_loop():
 
 
 def test_properties__infinite_loop2():
-    from alchemyjsonschema import AlsoChildrenWalker, ComfortableDesicion
-    target = _makeOne(AlsoChildrenWalker, relation_decision=ComfortableDesicion())
+    from alchemyjsonschema import StructuralWalker, FullsetDesicion
+    target = _makeOne(StructuralWalker, relation_decision=FullsetDesicion())
     result = target(X)
     assert "required" in result
     assert list(sorted(result["properties"])) == ["id", "y_id"]

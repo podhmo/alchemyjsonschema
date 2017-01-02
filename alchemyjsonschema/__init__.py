@@ -152,7 +152,7 @@ class BaseModelWalker(object):
 # mapper.column_attrs and mapper.attrs is not ordered. define our custom iterate function `iterate'
 
 
-class SingleModelWalker(BaseModelWalker):
+class ForeignKeyWalker(BaseModelWalker):
     def iterate(self):
         for c in self.mapper.local_table.columns:
             yield self.mapper._props[c.name]  # danger!! not immutable
@@ -162,10 +162,9 @@ class SingleModelWalker(BaseModelWalker):
             if self.includes is None or prop.key in self.includes:
                 if self.excludes is None or prop.key not in self.excludes:
                     yield prop
-SeeForeignKeyWalker = SingleModelWalker
 
 
-class OneModelOnlyWalker(BaseModelWalker):
+class NoForeignKeyWalker(BaseModelWalker):
     def iterate(self):
         for c in self.mapper.local_table.columns:
             yield self.mapper._props[c.name]  # danger!! not immutable
@@ -176,10 +175,9 @@ class OneModelOnlyWalker(BaseModelWalker):
                 if self.excludes is None or prop.key not in self.excludes:
                     if not any(c.foreign_keys for c in getattr(prop, "columns", Empty)):
                         yield prop
-NoForeignKeyWalker = OneModelOnlyWalker
 
 
-class AlsoChildrenWalker(BaseModelWalker):
+class StructuralWalker(BaseModelWalker):
     def iterate(self):
         # self.mapper.attrs
         for c in self.mapper.local_table.columns:
@@ -195,8 +193,6 @@ class AlsoChildrenWalker(BaseModelWalker):
                         if prop not in self.history:
                             if not any(c.foreign_keys for c in getattr(prop, "columns", Empty)):
                                 yield prop
-
-StructuralWalker = AlsoChildrenWalker
 
 
 def get_children(name, params, splitter=".", default=None):  # todo: rename
@@ -274,7 +270,7 @@ class RelationDesicion(object):
             raise NotImplemented(prop)
 
 
-class ComfortableDesicion(object):
+class FullsetDesicion(object):
     def desicion(self, walker, prop, toplevel):
         if hasattr(prop, "mapper"):
             if prop.direction == MANYTOONE:

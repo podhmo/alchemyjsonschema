@@ -6,10 +6,10 @@ def _callFUT(*args, **kwargs):
 
 def test_it_update_parent__onlyone():
     from alchemyjsonschema.tests import models as m
-    from alchemyjsonschema import SchemaFactory, OneModelOnlyWalker
+    from alchemyjsonschema import SchemaFactory, NoForeignKeyWalker
     from alchemyjsonschema.dictify import ModelLookup
 
-    factory = SchemaFactory(OneModelOnlyWalker)
+    factory = SchemaFactory(NoForeignKeyWalker)
     a_schema = factory(m.A0)
     modellookup = ModelLookup(m)
 
@@ -24,10 +24,10 @@ def test_it_update_parent__onlyone():
 
 def test_it_update_parent__full():
     from alchemyjsonschema.tests import models as m
-    from alchemyjsonschema import SchemaFactory, AlsoChildrenWalker
+    from alchemyjsonschema import SchemaFactory, StructuralWalker
     from alchemyjsonschema.dictify import ModelLookup
 
-    factory = SchemaFactory(AlsoChildrenWalker)
+    factory = SchemaFactory(StructuralWalker)
     a_schema = factory(m.A0)
     modellookup = ModelLookup(m)
 
@@ -41,10 +41,10 @@ def test_it_update_parent__full():
 
 def test_it_create_child():
     from alchemyjsonschema.tests import models as m
-    from alchemyjsonschema import SchemaFactory, AlsoChildrenWalker
+    from alchemyjsonschema import SchemaFactory, StructuralWalker
     from alchemyjsonschema.dictify import ModelLookup
 
-    factory = SchemaFactory(AlsoChildrenWalker)
+    factory = SchemaFactory(StructuralWalker)
     a_schema = factory(m.A0)
     modellookup = ModelLookup(m)
 
@@ -58,10 +58,10 @@ def test_it_create_child():
 
 def test_it_update_child():
     from alchemyjsonschema.tests import models as m
-    from alchemyjsonschema import SchemaFactory, AlsoChildrenWalker
+    from alchemyjsonschema import SchemaFactory, StructuralWalker
     from alchemyjsonschema.dictify import ModelLookup
 
-    factory = SchemaFactory(AlsoChildrenWalker)
+    factory = SchemaFactory(StructuralWalker)
     a_schema = factory(m.A0)
     modellookup = ModelLookup(m)
 
@@ -76,10 +76,10 @@ def test_it_update_child():
 
 def test_it_delete_child():
     from alchemyjsonschema.tests import models as m
-    from alchemyjsonschema import SchemaFactory, AlsoChildrenWalker
+    from alchemyjsonschema import SchemaFactory, StructuralWalker
     from alchemyjsonschema.dictify import ModelLookup
 
-    factory = SchemaFactory(AlsoChildrenWalker)
+    factory = SchemaFactory(StructuralWalker)
     a_schema = factory(m.A0)
     modellookup = ModelLookup(m)
 
@@ -93,10 +93,10 @@ def test_it_delete_child():
 
 def test_it_reverse_update():
     from alchemyjsonschema.tests import models as m
-    from alchemyjsonschema import SchemaFactory, AlsoChildrenWalker
+    from alchemyjsonschema import SchemaFactory, StructuralWalker
     from alchemyjsonschema.dictify import ModelLookup
 
-    factory = SchemaFactory(AlsoChildrenWalker)
+    factory = SchemaFactory(StructuralWalker)
     a_schema = factory(m.A1)
     modellookup = ModelLookup(m)
 

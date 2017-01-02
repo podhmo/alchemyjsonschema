@@ -26,10 +26,10 @@ def _makeOne(schema_factory, model, *args, **kwargs):
 
 
 def test_it__dict_from_model_object():
-    from alchemyjsonschema import AlsoChildrenWalker, SchemaFactory
+    from alchemyjsonschema import StructuralWalker, SchemaFactory
     from .models import Group, User
 
-    schema_factory = SchemaFactory(AlsoChildrenWalker)
+    schema_factory = SchemaFactory(StructuralWalker)
     target = _makeOne(schema_factory, Group)
 
     group = Group(name="ravenclaw", color="blue", created_at=_datetime(2000, 1, 1, 10, 0, 0, 0))
@@ -44,10 +44,10 @@ def test_it__dict_from_model_object():
 
 
 def test_it__jsondict_from_model():
-    from alchemyjsonschema import AlsoChildrenWalker, SchemaFactory
+    from alchemyjsonschema import StructuralWalker, SchemaFactory
     from .models import Group, User
 
-    schema_factory = SchemaFactory(AlsoChildrenWalker)
+    schema_factory = SchemaFactory(StructuralWalker)
     target = _makeOne(schema_factory, Group)
 
     group = Group(name="ravenclaw", color="blue", created_at=_datetime(2000, 1, 1, 10, 0, 0, 0))
@@ -66,10 +66,10 @@ def test_it__jsondict_from_model():
 
 
 def test_it__validate__jsondict():
-    from alchemyjsonschema import AlsoChildrenWalker, SchemaFactory
+    from alchemyjsonschema import StructuralWalker, SchemaFactory
     from .models import Group
 
-    schema_factory = SchemaFactory(AlsoChildrenWalker)
+    schema_factory = SchemaFactory(StructuralWalker)
     target = _makeOne(schema_factory, Group)
 
     jsondict = {'color': 'blue',
@@ -82,10 +82,10 @@ def test_it__validate__jsondict():
 
 
 def test_it__dict_from_jsondict():
-    from alchemyjsonschema import AlsoChildrenWalker, SchemaFactory
+    from alchemyjsonschema import StructuralWalker, SchemaFactory
     from .models import Group
 
-    schema_factory = SchemaFactory(AlsoChildrenWalker)
+    schema_factory = SchemaFactory(StructuralWalker)
     target = _makeOne(schema_factory, Group)
 
     jsondict = {'color': 'blue',
@@ -104,10 +104,10 @@ def test_it__dict_from_jsondict():
 
 
 def test_it__object_from_dict():
-    from alchemyjsonschema import AlsoChildrenWalker, SchemaFactory
+    from alchemyjsonschema import StructuralWalker, SchemaFactory
     from .models import Group, User
 
-    schema_factory = SchemaFactory(AlsoChildrenWalker)
+    schema_factory = SchemaFactory(StructuralWalker)
     target = _makeOne(schema_factory, Group)
 
     group_dict = {'color': 'blue',

@@ -9,8 +9,8 @@ def _callFUT(*args, **kwargs):
 
 
 def _makeSchema(model):
-    from alchemyjsonschema import SchemaFactory, AlsoChildrenWalker
-    factory = SchemaFactory(AlsoChildrenWalker)
+    from alchemyjsonschema import SchemaFactory, StructuralWalker
+    factory = SchemaFactory(StructuralWalker)
     return factory(model)
 
 

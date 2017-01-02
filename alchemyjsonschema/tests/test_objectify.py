@@ -5,12 +5,12 @@ def _callFUT(*args, **kwargs):
 
 
 def test_it__simple():
-    from alchemyjsonschema import SchemaFactory, SingleModelWalker
+    from alchemyjsonschema import SchemaFactory, ForeignKeyWalker
     from alchemyjsonschema.dictify import ModelLookup
     import alchemyjsonschema.tests.models as models
     from datetime import datetime
 
-    factory = SchemaFactory(SingleModelWalker)
+    factory = SchemaFactory(ForeignKeyWalker)
     user_schema = factory(models.User)
 
     created_at = datetime(2000, 1, 1)
@@ -27,13 +27,13 @@ def test_it__simple():
 
 
 def test_it__strict_true__then__required_are_notfound__error_raised():
-    from alchemyjsonschema import SchemaFactory, SingleModelWalker, InvalidStatus
+    from alchemyjsonschema import SchemaFactory, ForeignKeyWalker, InvalidStatus
     from alchemyjsonschema.dictify import ModelLookup
     import alchemyjsonschema.tests.models as models
     from datetime import datetime
     import pytest
 
-    factory = SchemaFactory(SingleModelWalker)
+    factory = SchemaFactory(ForeignKeyWalker)
     user_schema = factory(models.User)
 
     created_at = datetime(2000, 1, 1)
@@ -45,12 +45,12 @@ def test_it__strict_true__then__required_are_notfound__error_raised():
 
 
 def test_it__strict_false__then__required_are_notfound__ok():
-    from alchemyjsonschema import SchemaFactory, SingleModelWalker
+    from alchemyjsonschema import SchemaFactory, ForeignKeyWalker
     from alchemyjsonschema.dictify import ModelLookup
     import alchemyjsonschema.tests.models as models
     from datetime import datetime
 
-    factory = SchemaFactory(SingleModelWalker)
+    factory = SchemaFactory(ForeignKeyWalker)
     user_schema = factory(models.User)
 
     created_at = datetime(2000, 1, 1)
@@ -67,12 +67,12 @@ def test_it__strict_false__then__required_are_notfound__ok():
 
 
 def test_it_complex__relation_decision():
-    from alchemyjsonschema import SchemaFactory, AlsoChildrenWalker, RelationDesicion
+    from alchemyjsonschema import SchemaFactory, StructuralWalker, RelationDesicion
     from alchemyjsonschema.dictify import ModelLookup
     import alchemyjsonschema.tests.models as models
     from datetime import datetime
 
-    factory = SchemaFactory(AlsoChildrenWalker, relation_decision=RelationDesicion())
+    factory = SchemaFactory(StructuralWalker, relation_decision=RelationDesicion())
     user_schema = factory(models.User)
 
     created_at = datetime(2000, 1, 1)
@@ -97,13 +97,13 @@ def test_it_complex__relation_decision():
     assert modellookup.name_stack == []
 
 
-def test_it_complex__comfortable_decision():
-    from alchemyjsonschema import SchemaFactory, AlsoChildrenWalker, ComfortableDesicion
+def test_it_complex__fullset_decision():
+    from alchemyjsonschema import SchemaFactory, StructuralWalker, FullsetDesicion
     from alchemyjsonschema.dictify import ModelLookup
     import alchemyjsonschema.tests.models as models
     from datetime import datetime
 
-    factory = SchemaFactory(AlsoChildrenWalker, relation_decision=ComfortableDesicion())
+    factory = SchemaFactory(StructuralWalker, relation_decision=FullsetDesicion())
     user_schema = factory(models.User)
 
     created_at = datetime(2000, 1, 1)
@@ -121,12 +121,12 @@ def test_it_complex__comfortable_decision():
 
 
 def test_it_complex2():
-    from alchemyjsonschema import SchemaFactory, AlsoChildrenWalker
+    from alchemyjsonschema import SchemaFactory, StructuralWalker
     from alchemyjsonschema.dictify import ModelLookup
     import alchemyjsonschema.tests.models as models
     from datetime import datetime
 
-    factory = SchemaFactory(AlsoChildrenWalker)
+    factory = SchemaFactory(StructuralWalker)
     group_schema = factory(models.Group)
 
     created_at = datetime(2000, 1, 1)
@@ -151,12 +151,12 @@ def test_it_complex2():
 
 
 def test_it_complex__partial():
-    from alchemyjsonschema import SchemaFactory, AlsoChildrenWalker
+    from alchemyjsonschema import SchemaFactory, StructuralWalker
     from alchemyjsonschema.dictify import ModelLookup
     import alchemyjsonschema.tests.models as models
     from datetime import datetime
 
-    factory = SchemaFactory(AlsoChildrenWalker)
+    factory = SchemaFactory(StructuralWalker)
     user_schema = factory(models.User)
 
     created_at = datetime(2000, 1, 1)
@@ -175,12 +175,12 @@ def test_it_complex__partial():
 
 
 def test_it_complex__partial2():
-    from alchemyjsonschema import SchemaFactory, AlsoChildrenWalker
+    from alchemyjsonschema import SchemaFactory, StructuralWalker
     from alchemyjsonschema.dictify import ModelLookup
     import alchemyjsonschema.tests.models as models
     from datetime import datetime
 
-    factory = SchemaFactory(AlsoChildrenWalker)
+    factory = SchemaFactory(StructuralWalker)
     group_schema = factory(models.Group)
 
     created_at2 = datetime(2001, 1, 1)
@@ -199,12 +199,12 @@ def test_it_complex__partial2():
 
 
 def test_it_complex__partia3():
-    from alchemyjsonschema import SchemaFactory, AlsoChildrenWalker
+    from alchemyjsonschema import SchemaFactory, StructuralWalker
     from alchemyjsonschema.dictify import ModelLookup
     import alchemyjsonschema.tests.models as models
     from datetime import datetime
 
-    factory = SchemaFactory(AlsoChildrenWalker)
+    factory = SchemaFactory(StructuralWalker)
     user_schema = factory(models.User)
 
     created_at = datetime(2000, 1, 1)
@@ -223,12 +223,12 @@ def test_it_complex__partia3():
 
 
 def test_it_complex__partial4():
-    from alchemyjsonschema import SchemaFactory, AlsoChildrenWalker
+    from alchemyjsonschema import SchemaFactory, StructuralWalker
     from alchemyjsonschema.dictify import ModelLookup
     import alchemyjsonschema.tests.models as models
     from datetime import datetime
 
-    factory = SchemaFactory(AlsoChildrenWalker)
+    factory = SchemaFactory(StructuralWalker)
     group_schema = factory(models.Group)
 
     created_at2 = datetime(2001, 1, 1)
@@ -248,10 +248,10 @@ def test_it_complex__partial4():
 
 def test_it_nested():
     from alchemyjsonschema.tests import models
-    from alchemyjsonschema import SchemaFactory, AlsoChildrenWalker
+    from alchemyjsonschema import SchemaFactory, StructuralWalker
     from alchemyjsonschema.dictify import ModelLookup
 
-    factory = SchemaFactory(AlsoChildrenWalker)
+    factory = SchemaFactory(StructuralWalker)
     a_schema = factory(models.A0)
     modellookup = ModelLookup(models)
 

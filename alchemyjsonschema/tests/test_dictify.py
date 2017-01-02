@@ -21,11 +21,11 @@ def _callFUT4(*args, **kwargs):
 
 
 def test_it__dictify():
-    from alchemyjsonschema import SchemaFactory, AlsoChildrenWalker
+    from alchemyjsonschema import SchemaFactory, StructuralWalker
     from alchemyjsonschema.tests.models import Group, User
     from datetime import datetime
 
-    factory = SchemaFactory(AlsoChildrenWalker)
+    factory = SchemaFactory(StructuralWalker)
     group_schema = factory(Group)
 
     created_at = datetime(2000, 1, 1)
@@ -40,11 +40,11 @@ def test_it__dictify():
 
 
 def test_it__dictify2():
-    from alchemyjsonschema import SchemaFactory, AlsoChildrenWalker
+    from alchemyjsonschema import SchemaFactory, StructuralWalker
     from alchemyjsonschema.tests.models import Group, User
     from datetime import datetime
 
-    factory = SchemaFactory(AlsoChildrenWalker)
+    factory = SchemaFactory(StructuralWalker)
     user_schema = factory(User)
 
     created_at = datetime(2000, 1, 1)
@@ -57,13 +57,13 @@ def test_it__dictify2():
 
 
 def test_it__normalize():
-    from alchemyjsonschema import SchemaFactory, AlsoChildrenWalker
+    from alchemyjsonschema import SchemaFactory, StructuralWalker
     from alchemyjsonschema.tests.models import Group
     from datetime import datetime
     import pytz
     created_at = datetime(2000, 1, 1, 0, 0, 0, 0, pytz.utc)
 
-    factory = SchemaFactory(AlsoChildrenWalker)
+    factory = SchemaFactory(StructuralWalker)
     group_schema = factory(Group)
     group_dict = {'name': 'ravenclaw', 'created_at': '2000-01-01T00:00:00+00:00', 'color': 'blue', 'pk': None,
                   'users': [{'name': 'foo', 'created_at': '2000-01-01T00:00:00+00:00', 'pk': None},
@@ -76,10 +76,10 @@ def test_it__normalize():
 
 
 def test_it_normalize2():
-    from alchemyjsonschema import SchemaFactory, AlsoChildrenWalker
+    from alchemyjsonschema import SchemaFactory, StructuralWalker
     from alchemyjsonschema.tests.models import User
 
-    factory = SchemaFactory(AlsoChildrenWalker)
+    factory = SchemaFactory(StructuralWalker)
     user_schema = factory(User)
     user_dict = {"pk": None, 'name': 'foo', "created_at": None, "group": {"name": "ravenclaw", "color": "blue", "pk": None, "created_at": None}}
 
@@ -88,10 +88,10 @@ def test_it_normalize2():
 
 
 def test_it_normalize__partial():
-    from alchemyjsonschema import SchemaFactory, AlsoChildrenWalker
+    from alchemyjsonschema import SchemaFactory, StructuralWalker
     from alchemyjsonschema.tests.models import Group
 
-    factory = SchemaFactory(AlsoChildrenWalker)
+    factory = SchemaFactory(StructuralWalker)
     group_schema = factory(Group)
     group_dict = {'name': 'ravenclaw', 'color': 'blue'}
 
@@ -100,10 +100,10 @@ def test_it_normalize__partial():
 
 
 def test_it_normalize__partial2():
-    from alchemyjsonschema import SchemaFactory, AlsoChildrenWalker
+    from alchemyjsonschema import SchemaFactory, StructuralWalker
     from alchemyjsonschema.tests.models import User
 
-    factory = SchemaFactory(AlsoChildrenWalker)
+    factory = SchemaFactory(StructuralWalker)
     user_schema = factory(User)
     user_dict = {'name': 'foo'}
 
@@ -112,10 +112,10 @@ def test_it_normalize__partial2():
 
 
 def test_it__prepare():
-    from alchemyjsonschema import SchemaFactory, AlsoChildrenWalker
+    from alchemyjsonschema import SchemaFactory, StructuralWalker
     from alchemyjsonschema.tests.models import Group
 
-    factory = SchemaFactory(AlsoChildrenWalker)
+    factory = SchemaFactory(StructuralWalker)
     group_schema = factory(Group)
     group_dict = {'name': 'ravenclaw', 'created_at': '2000-01-01T00:00:00+00:00', 'color': 'blue', 'pk': 1,
                   'users': [{'name': 'foo', 'created_at': '2000-01-01T00:00:00+00:00', 'pk': 12},
@@ -129,10 +129,10 @@ def test_it__prepare():
 
 
 def test_it__prepare_partial():
-    from alchemyjsonschema import SchemaFactory, AlsoChildrenWalker
+    from alchemyjsonschema import SchemaFactory, StructuralWalker
     from alchemyjsonschema.tests.models import Group
 
-    factory = SchemaFactory(AlsoChildrenWalker)
+    factory = SchemaFactory(StructuralWalker)
     group_schema = factory(Group)
     group_dict = {'name': 'ravenclaw', 'color': 'blue', 'pk': 1}
 
@@ -141,11 +141,11 @@ def test_it__prepare_partial():
 
 
 def test_it__jsonify():
-    from alchemyjsonschema import SchemaFactory, AlsoChildrenWalker
+    from alchemyjsonschema import SchemaFactory, StructuralWalker
     from alchemyjsonschema.tests.models import Group, User
     from datetime import datetime
 
-    factory = SchemaFactory(AlsoChildrenWalker)
+    factory = SchemaFactory(StructuralWalker)
     group_schema = factory(Group)
 
     created_at = datetime(2000, 1, 1)

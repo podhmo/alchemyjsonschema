@@ -6,10 +6,10 @@ def _getTarget():
 
 def _makeOne(*args, **kwargs):
     from alchemyjsonschema import (
-        SingleModelWalker,
+        ForeignKeyWalker,
         DefaultClassfier
     )
-    return _getTarget()(SingleModelWalker, DefaultClassfier)
+    return _getTarget()(ForeignKeyWalker, DefaultClassfier)
 
 
 # definition
