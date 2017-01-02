@@ -270,7 +270,7 @@ class RelationDesicion(object):
             raise NotImplemented(prop)
 
 
-class FullsetDesicion(object):
+class UseForeignKeyIfPossibleDecision(object):
     def desicion(self, walker, prop, toplevel):
         if hasattr(prop, "mapper"):
             if prop.direction == MANYTOONE:

@@ -98,12 +98,12 @@ def test_it_complex__relation_decision():
 
 
 def test_it_complex__fullset_decision():
-    from alchemyjsonschema import SchemaFactory, StructuralWalker, FullsetDesicion
+    from alchemyjsonschema import SchemaFactory, StructuralWalker, UseForeignKeyIfPossibleDecision
     from alchemyjsonschema.dictify import ModelLookup
     import alchemyjsonschema.tests.models as models
     from datetime import datetime
 
-    factory = SchemaFactory(StructuralWalker, relation_decision=FullsetDesicion())
+    factory = SchemaFactory(StructuralWalker, relation_decision=UseForeignKeyIfPossibleDecision())
     user_schema = factory(models.User)
 
     created_at = datetime(2000, 1, 1)

@@ -14,7 +14,7 @@ from . import (
 )
 from . import (
     RelationDesicion,
-    FullsetDesicion
+    UseForeignKeyIfPossibleDecision
 )
 
 
@@ -32,8 +32,8 @@ def detect_walker(x):
 def detect_decision(x):
     if x == "default":
         return RelationDesicion()
-    elif x == "fullset":
-        return FullsetDesicion()
+    elif x == "useforeignkey":
+        return UseForeignKeyIfPossibleDecision()
     else:
         raise Exception(x)
 
@@ -95,7 +95,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("target", help='the module or class to extract schemas from')
     parser.add_argument("--walker", choices=["noforeignkey", "foreignkey", "structual"], default="structual")
-    parser.add_argument("--decision", choices=["default", "fullset"], default="default")
+    parser.add_argument("--decision", choices=["default", "useforeignkey"], default="default")
     parser.add_argument("--depth", default=None, type=int)
     parser.add_argument("--out", default=None, help='output to file')
 

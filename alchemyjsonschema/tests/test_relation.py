@@ -54,8 +54,8 @@ def test_properties__include_OnetoMany_relation():
 
 
 def test_properties__include_OnetoMany_relation2():
-    from alchemyjsonschema import StructuralWalker, FullsetDesicion
-    target = _makeOne(StructuralWalker, relation_decision=FullsetDesicion())
+    from alchemyjsonschema import StructuralWalker, UseForeignKeyIfPossibleDecision
+    target = _makeOne(StructuralWalker, relation_decision=UseForeignKeyIfPossibleDecision())
     result = target(User)
 
     assert "required" in result
@@ -216,8 +216,8 @@ def test_properties__infinite_loop():
 
 
 def test_properties__infinite_loop2():
-    from alchemyjsonschema import StructuralWalker, FullsetDesicion
-    target = _makeOne(StructuralWalker, relation_decision=FullsetDesicion())
+    from alchemyjsonschema import StructuralWalker, UseForeignKeyIfPossibleDecision
+    target = _makeOne(StructuralWalker, relation_decision=UseForeignKeyIfPossibleDecision())
     result = target(X)
     assert "required" in result
     assert list(sorted(result["properties"])) == ["id", "y_id"]
