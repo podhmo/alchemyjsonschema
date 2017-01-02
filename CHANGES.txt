@@ -1,1 +1,7 @@
-- 0.3: swagger support(thanks of isysd)
+0.4.0
+
+- remove needless feature(#11)
+
+0.3
+
+- swagger support(thanks of isysd)
