@@ -11,7 +11,6 @@ from . import (
     AlsoChildrenWalker,
     OneModelOnlyWalker,
     SingleModelWalker,
-    HandControlledWalkerFactory,
     RelationDesicion,
     ComfortableDesicion
 )
@@ -34,8 +33,6 @@ def detect_walker(x):
         return OneModelOnlyWalker
     elif x == "foreignkey":
         return SingleModelWalker
-    elif x == "control":
-        return HandControlledWalkerFactory
     else:
         raise Exception(x)
 
@@ -108,11 +105,9 @@ def run(walker, model=None, module=None, depth=None,
 def main(sys_args=sys.argv[1:]):
     parser = argparse.ArgumentParser()
     parser.add_argument("target", help='the module or class to extract schemas from')
-    parser.add_argument("--walker", choices=["noforeignkey", "foreignkey", "structual", "control"], default="structual")
+    parser.add_argument("--walker", choices=["noforeignkey", "foreignkey", "structual"], default="structual")
     parser.add_argument("--decision", choices=["default", "comfortable"], default="default")
     parser.add_argument("--depth", default=None, type=int)
-    parser.add_argument("--decision-relationship", default="")
-    parser.add_argument("--decision-foreignkey", default="")
     parser.add_argument("--out-dir", default=None, help='Write output to files in this directory instead of printing.')
     parser.add_argument("--definitions", default=None, help='Instead of individual files, output all schemas as a single definitions file.')
     args = parser.parse_args(sys_args)
@@ -124,10 +119,6 @@ def main(sys_args=sys.argv[1:]):
     else:
         module = rawtarget
     walker = detect_walker(args.walker)
-    if walker == HandControlledWalkerFactory:
-        decisions = {k.strip(): "relationship" for k in args.decision_relationship.split(" ")}
-        decisions.update({k.strip(): "foreignkey" for k in args.decision_foreignkey.split(" ")})
-        walker = walker(decisions)
     return run(walker, model=model,
                module=module, depth=args.depth,
                relation_decision=detect_decision(args.decision),

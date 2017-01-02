@@ -1,7 +1,5 @@
 # -*- coding:utf-8 -*-
 import logging
-logger = logging.getLogger(__name__)
-
 from collections import OrderedDict
 import sqlalchemy.types as t
 from sqlalchemy.inspection import inspect
@@ -10,6 +8,7 @@ from sqlalchemy.orm.relationships import RelationshipProperty
 from sqlalchemy.sql.visitors import VisitableType
 from sqlalchemy.orm.base import ONETOMANY, MANYTOONE, MANYTOMANY
 from sqlalchemy.sql.type_api import TypeEngine
+logger = logging.getLogger(__name__)
 
 EMPTY_DICT = {}
 
@@ -198,53 +197,6 @@ class AlsoChildrenWalker(BaseModelWalker):
                                 yield prop
 
 StructuralWalker = AlsoChildrenWalker
-
-
-class HandControlledWalkerFactory(object):
-    def __init__(self, decisions):
-        self.decisions = decisions
-
-    def __call__(self, model, includes=None, excludes=None, history=None):
-        return HandControlledWalker(model, includes, excludes, history, decisions=self.decisions)
-
-
-class HandControlledWalker(BaseModelWalker):
-    def __init__(self, model, includes=None, excludes=None, history=None, decisions=None):
-        super(HandControlledWalker, self).__init__(model, includes, excludes, history)
-        self.decisions = decisions
-        self.walking = []
-
-    def iterate(self):
-        # self.mapper.attrs
-        for c in self.mapper.local_table.columns:
-            yield self.mapper._props[c.name]  # danger!! not immutable
-        for prop in self.mapper.relationships:
-            for prop in self.treat_relationship(prop):
-                yield prop
-
-    def walk(self):
-        for prop in self.iterate():
-            if isinstance(prop, (ColumnProperty, RelationshipProperty)):
-                if self.includes is None or prop.key in self.includes:
-                    if self.excludes is None or prop.key not in self.excludes:
-                        if prop not in self.history:
-                            if prop.key in self.walking or (not any(c.foreign_keys for c in getattr(prop, "columns", Empty))):
-                                yield prop
-
-    def treat_relationship(self, prop):
-        decision = self.decisions[prop.key]
-        if decision == "relationship":
-            yield prop
-        elif decision == "foreignkey":
-            for c in prop.local_columns:
-                self.walking.append(c.name)
-                yield self.mapper._props[c.name]
-        else:
-            raise Exception(decision)
-
-    def clone(self, name, mapper, includes, excludes, history):
-        decisions = get_children(name, self.decisions)
-        return self.__class__(mapper, includes, excludes, history, decisions)  # xxx
 
 
 def get_children(name, params, splitter=".", default=None):  # todo: rename
