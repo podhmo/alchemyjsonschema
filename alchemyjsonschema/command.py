@@ -4,26 +4,18 @@ import sys
 import pkg_resources
 import json
 import argparse
-
-
 from . import (
     SchemaFactory,
+)
+from . import (
     StructuralWalker,
     NoForeignKeyWalker,
     ForeignKeyWalker,
+)
+from . import (
     RelationDesicion,
     FullsetDesicion
 )
-
-
-def import_symbol(symbol):  # todo cache
-    return pkg_resources.EntryPoint.parse("x=%s" % symbol).load(False)
-
-
-def err(x):
-    sys.stderr.write(x)
-    sys.stderr.write("\n")
-    sys.stderr.flush()
 
 
 def detect_walker(x):
@@ -46,80 +38,75 @@ def detect_decision(x):
         raise Exception(x)
 
 
-def write_output_file(schema, name, outdir):
-    schemaf = outdir + "/" + name
-    f = open(schemaf, 'w')
-    f.write(schema)
-    f.close()
+class Driver(object):
+    def __init__(self, transformer):
+        self.transformer = transformer
+
+    def run(self, module_path, wf, depth=None):
+        data = self.load(module_path)
+        result = self.transformer.transform(data, depth=depth)
+        self.dump(result, wf)
+
+    def dump(self, data, wf):
+        json.dump(data, wf, ensure_ascii=False, indent=2, sort_keys=True)
+
+    def load(self, module_path):
+        # todo: this is obsolete feature
+        return pkg_resources.EntryPoint.parse("x=%s" % module_path).load(False)
 
 
-def handle_output(schema, name, outdir=None):
-    if outdir is None:
-        print(schema)
-    else:
-        write_output_file(schema, name, outdir)
+class Transformer(object):
+    def __init__(self, schema_factory):
+        self.schema_factory = schema_factory
 
+    def transform(self, rawtarget, depth):
+        if inspect.isclass(rawtarget):
+            return self.transform_by_model(rawtarget, depth)
+        else:
+            return self.transform_by_module(rawtarget, depth)
 
-def is_alchemy_model(maybe_model):
-    return hasattr(maybe_model, "__table__") or hasattr(maybe_model, "__tablename__")
-
-
-def get_model_name_list(module):
-    if hasattr(module, "__all__"):
-        return module.__all__
-    else:
-        return [name for name, value in module.__dict__.items() if is_alchemy_model(value)]
-
-
-def run(walker, model=None, module=None, depth=None,
-        relation_decision=None, outdir=None, definition_name=None):
-    make_schema = SchemaFactory(walker, relation_decision=relation_decision)
-
-    if model is not None:
-        # default behavior
-        schema = make_schema(model, depth=depth)
-        handle_output(json.dumps(schema, indent=2, ensure_ascii=False),
-                      model, outdir=outdir)
-    elif module is not None:
-        # iterate over attributes of module looking for orm objects
+    def transform_by_model(self, model, depth):
         definitions = {}
-        for name in get_model_name_list(module):
-            basemodel = getattr(module, name)
-            schema = make_schema(basemodel, depth=depth)
+        schema = self.schema_factory(model, depth=depth)
+        if "definitions" in schema:
+            definitions.update(schema.pop("definitions"))
+        definitions[schema['title']] = schema
+        return {"definitions": definitions}
+
+    def transform_by_module(self, module, depth):
+        definitions = {}
+        for basemodel in collect_models(module):
+            schema = self.schema_factory(basemodel, depth=depth)
             definitions[schema['title']] = schema
-            if definition_name is None:
-                handle_output(json.dumps(schema, indent=2, ensure_ascii=False),
-                              basemodel.__tablename__ + ".json", outdir=outdir)
+        return {"definitions": definitions}
 
-        # create a single definitions file, such as a swagger spec might use
-        if definition_name is not None:
-            outdir = outdir or "."
-            for schema in definitions.values():
-                schema.pop('definitions', None)
-            handle_output(json.dumps({"definitions": definitions}, indent=2, ensure_ascii=False),
-                          definition_name, outdir=outdir)
+
+def collect_models(module):
+    def is_alchemy_model(maybe_model):
+        return hasattr(maybe_model, "__table__") or hasattr(maybe_model, "__tablename__")
+
+    if hasattr(module, "__all__"):
+        return [getattr(module, name) for name in module.__all__]
     else:
-        print("Error: Target was neither a model nor a module.")
+        return [value for name, value in module.__dict__.items() if is_alchemy_model(value)]
 
 
-def main(sys_args=sys.argv[1:]):
+def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("target", help='the module or class to extract schemas from')
     parser.add_argument("--walker", choices=["noforeignkey", "foreignkey", "structual"], default="structual")
     parser.add_argument("--decision", choices=["default", "fullset"], default="default")
     parser.add_argument("--depth", default=None, type=int)
-    parser.add_argument("--out-dir", default=None, help='Write output to files in this directory instead of printing.')
-    parser.add_argument("--definitions", default=None, help='Instead of individual files, output all schemas as a single definitions file.')
-    args = parser.parse_args(sys_args)
-    model = None
-    module = None
-    rawtarget = import_symbol(args.target)
-    if inspect.isclass(rawtarget):
-        model = rawtarget
-    else:
-        module = rawtarget
+    parser.add_argument("--out", default=None, help='output to file')
+
+    args = parser.parse_args()
+
     walker = detect_walker(args.walker)
-    return run(walker, model=model,
-               module=module, depth=args.depth,
-               relation_decision=detect_decision(args.decision),
-               outdir=args.out_dir, definition_name=args.definitions)
+    relation_decision = detect_decision(args.decision)
+
+    driver = Driver(Transformer(SchemaFactory(walker, relation_decision=relation_decision)))
+    if args.out:
+        with open(args.out, "w") as wf:
+            return driver.run(args.target, wf)
+    else:
+        return driver.run(args.target, sys.stdout)
