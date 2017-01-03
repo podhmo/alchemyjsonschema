@@ -153,7 +153,7 @@ help
 .. code:: bash
 
     $ alchemyjsonschema --help
-    usage: alchemyjsonschema [-h] [--walker {noforeignkey,foreignkey,structual}]
+    usage: alchemyjsonschema [-h] [--walker {noforeignkey,foreignkey,structural}]
                              [--decision {default,fullset}] [--depth DEPTH]
                              [--out OUT]
                              target
@@ -163,7 +163,7 @@ help
 
     optional arguments:
       -h, --help            show this help message and exit
-      --walker {noforeignkey,foreignkey,structual}
+      --walker {noforeignkey,foreignkey,structural}
       --decision {default,fullset}
       --depth DEPTH
       --out OUT             output to file
@@ -183,7 +183,7 @@ Of course, NoForeignKeyWalker is noforeignkey, and ForeignKeyWalker is foreignke
 
 .. code:: bash
 
-    $ alchemyjsonschema --walker structual alchemyjsonschema.tests.models:Group
+    $ alchemyjsonschema --walker structural alchemyjsonschema.tests.models:Group
 
     {
       "definitions": {
@@ -256,8 +256,8 @@ what is `--decision`? (TODO: gentle description)
 
 .. code-block:: bash
 
-   $ alchemyjsonschema --walker structual alchemyjsonschema.tests.models:User | jq . -S > /tmp/default.json
-   $ alchemyjsonschema --decision useforeignkey --walker structual alchemyjsonschema.tests.models:User | jq . -S > /tmp/useforeignkey.json
+   $ alchemyjsonschema --walker structural alchemyjsonschema.tests.models:User | jq . -S > /tmp/default.json
+   $ alchemyjsonschema --decision useforeignkey --walker structural alchemyjsonschema.tests.models:User | jq . -S > /tmp/useforeignkey.json
    $ diff -u /tmp/default.json /tmp/useforeignkey.json
 
 .. code-block:: diff
