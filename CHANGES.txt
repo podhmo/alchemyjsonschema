@@ -1,3 +1,7 @@
+0.4.2
+
+- fix bug calling command with module (not model class)
+
 0.4.0
 
 - remove needless feature(#11)

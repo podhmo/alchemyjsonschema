@@ -74,10 +74,16 @@ class Transformer(object):
         return {"definitions": definitions}
 
     def transform_by_module(self, module, depth):
+        subdefinitions = {}
         definitions = {}
         for basemodel in collect_models(module):
             schema = self.schema_factory(basemodel, depth=depth)
+            if "definitions" in schema:
+                subdefinitions.update(schema.pop("definitions"))
             definitions[schema['title']] = schema
+        d = {}
+        d.update(subdefinitions)
+        d.update(definitions)
         return {"definitions": definitions}
 
 
