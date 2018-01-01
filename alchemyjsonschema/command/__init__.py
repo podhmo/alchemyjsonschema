@@ -1,8 +1,7 @@
 import inspect
-import sys
-import json
 import argparse
 import magicalimport
+from dictknife import loading
 from alchemyjsonschema import (
     SchemaFactory,
 )
@@ -38,16 +37,17 @@ def detect_decision(x):
 
 
 class Driver(object):
-    def __init__(self, transformer):
+    def __init__(self, transformer, format):
         self.transformer = transformer
+        self.format = format
 
-    def run(self, module_path, wf, depth=None):
+    def run(self, module_path, filename, depth=None):
         data = self.load(module_path)
         result = self.transformer.transform(data, depth=depth)
-        self.dump(result, wf)
+        self.dump(result, filename)
 
-    def dump(self, data, wf):
-        json.dump(data, wf, ensure_ascii=False, indent=2, sort_keys=True)
+    def dump(self, data, filename):
+        loading.dumpfile(data, filename, format=self.format)
 
     def load(self, module_path):
         if ":" in module_path:
@@ -101,6 +101,7 @@ def collect_models(module):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("target", help='the module or class to extract schemas from')
+    parser.add_argument("--format", default="json", choices=["json", "yaml"])
     parser.add_argument(
         "--walker", choices=["noforeignkey", "foreignkey", "structural"], default="structural"
     )
@@ -113,9 +114,8 @@ def main():
     walker = detect_walker(args.walker)
     relation_decision = detect_decision(args.decision)
 
-    driver = Driver(Transformer(SchemaFactory(walker, relation_decision=relation_decision)))
-    if args.out:
-        with open(args.out, "w") as wf:
-            return driver.run(args.target, wf)
-    else:
-        return driver.run(args.target, sys.stdout)
+    driver = Driver(
+        Transformer(SchemaFactory(walker, relation_decision=relation_decision)),
+        format=args.format,
+    )
+    driver.run(args.target, args.out)

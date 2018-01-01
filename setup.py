@@ -17,7 +17,8 @@ install_requires = [
     'strict-rfc3339',
     'isodate',  # hmm.
     'pytz',
-    'magicalimport'
+    'magicalimport',
+    'dictknife'
 ]
 
 docs_extras = []
