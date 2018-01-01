@@ -1,9 +1,8 @@
-# -*- coding:utf-8 -*-
 import inspect
 import sys
-import pkg_resources
 import json
 import argparse
+import magicalimport
 from alchemyjsonschema import (
     SchemaFactory,
 )
@@ -51,8 +50,10 @@ class Driver(object):
         json.dump(data, wf, ensure_ascii=False, indent=2, sort_keys=True)
 
     def load(self, module_path):
-        # todo: this is obsolete feature
-        return pkg_resources.EntryPoint.parse("x=%s" % module_path).load(False)
+        if ":" in module_path:
+            return magicalimport.import_symbol(module_path)
+        else:
+            return magicalimport.import_module(module_path)
 
 
 class Transformer(object):
