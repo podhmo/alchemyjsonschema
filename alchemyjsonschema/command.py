@@ -14,7 +14,7 @@ from . import (
 )
 from . import (
     RelationDesicion,
-    UseForeignKeyIfPossibleDecision
+    UseForeignKeyIfPossibleDecision,
 )
 
 
@@ -100,7 +100,9 @@ def collect_models(module):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("target", help='the module or class to extract schemas from')
-    parser.add_argument("--walker", choices=["noforeignkey", "foreignkey", "structural"], default="structural")
+    parser.add_argument(
+        "--walker", choices=["noforeignkey", "foreignkey", "structural"], default="structural"
+    )
     parser.add_argument("--decision", choices=["default", "useforeignkey"], default="default")
     parser.add_argument("--depth", default=None, type=int)
     parser.add_argument("--out", default=None, help='output to file')
