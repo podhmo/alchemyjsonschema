@@ -67,6 +67,6 @@ setup(
     license="mit",
     entry_points="""
       [console_scripts]
-      alchemyjsonschema = alchemyjsonschema.command:main
+      alchemyjsonschema = alchemyjsonschema.command.main:main
       """
 )
