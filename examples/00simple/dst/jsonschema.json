@@ -1,0 +1,41 @@
+{
+  "definitions": {
+    "User": {
+      "properties": {
+        "name": {
+          "maxLength": 255,
+          "type": "string"
+        },
+        "pk": {
+          "description": "primary key",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "pk"
+      ],
+      "type": "object"
+    }
+  },
+  "properties": {
+    "name": {
+      "maxLength": 255,
+      "type": "string"
+    },
+    "pk": {
+      "description": "primary key",
+      "type": "integer"
+    },
+    "users": {
+      "items": {
+        "$ref": "#/definitions/User"
+      },
+      "type": "array"
+    }
+  },
+  "required": [
+    "pk"
+  ],
+  "title": "Group",
+  "type": "object"
+}
