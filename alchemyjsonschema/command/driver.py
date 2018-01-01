@@ -1,27 +1,68 @@
 import magicalimport
 from dictknife import loading
 from alchemyjsonschema import SchemaFactory
-from ._transformer import Transformer
+from alchemyjsonschema import (
+    StructuralWalker,
+    NoForeignKeyWalker,
+    ForeignKeyWalker,
+)
+from alchemyjsonschema import (
+    RelationDesicion,
+    UseForeignKeyIfPossibleDecision,
+)
+from ._transformer import (
+    JSONSchemaTransformer,
+    Swagger2Transformer,
+)
+
+
+def detect_walker_factory(x):
+    if x == "structural":
+        return StructuralWalker
+    elif x == "noforeignkey":
+        return NoForeignKeyWalker
+    elif x == "foreignkey":
+        return ForeignKeyWalker
+    else:
+        raise ValueError(x)
+
+
+def detect_decision(x):
+    if x == "default":
+        return RelationDesicion()
+    elif x == "useforeignkey":
+        return UseForeignKeyIfPossibleDecision()
+    else:
+        raise ValueError(x)
+
+
+def detect_transformer(layout):
+    if layout == "swagger2.0":
+        return Swagger2Transformer
+    elif layout == "jsonschema":
+        return JSONSchemaTransformer
+    else:
+        raise ValueError(layout)
 
 
 class Driver:
-    def __init__(self, walker, decision, format):
-        self.walker = walker
-        self.decision = decision
-        self.format = format
+    def __init__(self, walker, decision, layout):
+        self.transformer = self.build_transformer(walker, decision, layout)
 
-    def build_transformer(self):
-        schema_factory = SchemaFactory(self.walker, relation_decision=self.decision)
-        return Transformer(schema_factory).transform
+    def build_transformer(self, walker, decision, layout):
+        walker_factory = detect_walker_factory(walker)
+        relation_decision = detect_decision(decision)
+        schema_factory = SchemaFactory(walker_factory, relation_decision=relation_decision)
+        transformer_factory = detect_transformer(layout)
+        return transformer_factory(schema_factory).transform
 
-    def run(self, module_path, filename, depth=None):
-        transformer = self.build_transformer()
+    def run(self, module_path, filename, format, depth=None):
         data = self.load(module_path)
-        result = transformer(data, depth=depth)
-        self.dump(result, filename)
+        result = self.transformer(data, depth=depth)
+        self.dump(result, filename, format=format)
 
-    def dump(self, data, filename):
-        loading.dumpfile(data, filename, format=self.format)
+    def dump(self, data, filename, format):
+        loading.dumpfile(data, filename, format=format, sort_keys=True)
 
     def load(self, module_path):
         if ":" in module_path:

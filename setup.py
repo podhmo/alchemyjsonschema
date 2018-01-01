@@ -18,7 +18,7 @@ install_requires = [
     'isodate',  # hmm.
     'pytz',
     'magicalimport',
-    'dictknife'
+    'dictknife>=0.7.2'
 ]
 
 docs_extras = []
