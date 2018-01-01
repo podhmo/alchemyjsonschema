@@ -6,3 +6,6 @@ swagger2:
 
 jsonschema:
 	alchemyjsonschema models.py:Group --layout=jsonschema --out dst/jsonschema.json
+
+openapi3:
+	alchemyjsonschema models.py:Group --layout=openapi3.0 --out dst/openapi3.json

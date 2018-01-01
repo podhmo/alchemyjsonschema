@@ -12,7 +12,8 @@ from alchemyjsonschema import (
 )
 from ._transformer import (
     JSONSchemaTransformer,
-    Swagger2Transformer,
+    OpenAPI2Transformer,
+    OpenAPI3Transformer,
 )
 
 
@@ -37,8 +38,10 @@ def detect_decision(x):
 
 
 def detect_transformer(layout):
-    if layout == "swagger2.0":
-        return Swagger2Transformer
+    if layout in ("swagger2.0", "openapi2.0"):
+        return OpenAPI2Transformer
+    elif layout == "openapi3.0":
+        return OpenAPI3Transformer
     elif layout == "jsonschema":
         return JSONSchemaTransformer
     else:
