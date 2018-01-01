@@ -4,15 +4,15 @@ import sys
 import pkg_resources
 import json
 import argparse
-from . import (
+from alchemyjsonschema import (
     SchemaFactory,
 )
-from . import (
+from alchemyjsonschema import (
     StructuralWalker,
     NoForeignKeyWalker,
     ForeignKeyWalker,
 )
-from . import (
+from alchemyjsonschema import (
     RelationDesicion,
     UseForeignKeyIfPossibleDecision,
 )
