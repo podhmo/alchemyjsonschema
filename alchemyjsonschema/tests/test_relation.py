@@ -1,11 +1,13 @@
 # -*- coding:utf-8 -*-
 def _getTarget():
     from alchemyjsonschema import SchemaFactory
+
     return SchemaFactory
 
 
 def _makeOne(walker, *args, **kwargs):
     from alchemyjsonschema import DefaultClassfier
+
     return _getTarget()(walker, DefaultClassfier, *args, **kwargs)
 
 
@@ -19,6 +21,7 @@ Base = declarative_base()
 
 class Group(Base):
     """model for test"""
+
     __tablename__ = "Group"
 
     pk = sa.Column(sa.Integer, primary_key=True, doc="primary key")
@@ -36,6 +39,7 @@ class User(Base):
 
 def test_properties__default__includes__foreign_keys():
     from alchemyjsonschema import ForeignKeyWalker
+
     target = _makeOne(ForeignKeyWalker)
     result = target(User)
 
@@ -45,6 +49,7 @@ def test_properties__default__includes__foreign_keys():
 
 def test_properties__include_OnetoMany_relation():
     from alchemyjsonschema import StructuralWalker, RelationDesicion
+
     target = _makeOne(StructuralWalker, relation_decision=RelationDesicion())
     result = target(User)
 
@@ -55,39 +60,62 @@ def test_properties__include_OnetoMany_relation():
 
 def test_properties__include_OnetoMany_relation2():
     from alchemyjsonschema import StructuralWalker, UseForeignKeyIfPossibleDecision
-    target = _makeOne(StructuralWalker, relation_decision=UseForeignKeyIfPossibleDecision())
+
+    target = _makeOne(
+        StructuralWalker, relation_decision=UseForeignKeyIfPossibleDecision()
+    )
     result = target(User)
 
     assert "required" in result
     assert list(sorted(result["properties"])) == ["group_id", "name", "pk"]
-    assert result["properties"]["group_id"] == {'type': 'integer', "relation": "group"}
+    assert result["properties"]["group_id"] == {"type": "integer", "relation": "group"}
 
 
 def test_properties__include_ManytoOne_backref():
     from alchemyjsonschema import StructuralWalker
+
     target = _makeOne(StructuralWalker)
     result = target(Group)
 
     assert "required" in result
     assert list(sorted(result["properties"])) == ["name", "pk", "users"]
-    assert result["properties"]["users"] == {"type": "array", "items": {"$ref": "#/definitions/User"}}
-    assert result["definitions"]["User"] == {"type": "object", 'required': ['pk'],
-                                             "properties": {'name': {'maxLength': 255, 'type': 'string'},
-                                                            'pk': {'description': 'primary key', 'type': 'integer'}}}
+    assert result["properties"]["users"] == {
+        "type": "array",
+        "items": {"$ref": "#/definitions/User"},
+    }
+    assert result["definitions"]["User"] == {
+        "type": "object",
+        "required": ["pk"],
+        "properties": {
+            "name": {"maxLength": 255, "type": "string"},
+            "pk": {"description": "primary key", "type": "integer"},
+        },
+    }
 
 
 def test_properties__include_ManytoOne_backref__bidirectional_is_true():
     from alchemyjsonschema import StructuralWalker, ChildFactory
-    target = _makeOne(StructuralWalker, child_factory=ChildFactory(".", bidirectional=True))
+
+    target = _makeOne(
+        StructuralWalker, child_factory=ChildFactory(".", bidirectional=True)
+    )
     result = target(Group)
 
     assert "required" in result
     assert list(sorted(result["properties"])) == ["name", "pk", "users"]
-    assert result["properties"]["users"] == {"type": "array", "items": {"$ref": "#/definitions/User"}}
-    assert result["definitions"]["User"] == {"type": "object", 'required': ['pk'],
-                                             "properties": {'name': {'maxLength': 255, 'type': 'string'},
-                                                            'group': {'$ref': '#/definitions/Group'},
-                                                            'pk': {'description': 'primary key', 'type': 'integer'}}}
+    assert result["properties"]["users"] == {
+        "type": "array",
+        "items": {"$ref": "#/definitions/User"},
+    }
+    assert result["definitions"]["User"] == {
+        "type": "object",
+        "required": ["pk"],
+        "properties": {
+            "name": {"maxLength": 255, "type": "string"},
+            "group": {"$ref": "#/definitions/Group"},
+            "pk": {"description": "primary key", "type": "integer"},
+        },
+    }
 
 
 # depth
@@ -140,6 +168,7 @@ class A5(Base):
 def test_properties__default_depth_is__traverse_all_chlidren():
     from alchemyjsonschema import StructuralWalker
     from alchemyjsonschema.dictify import get_reference
+
     target = _makeOne(StructuralWalker)
     result = target(A0)
 
@@ -156,6 +185,7 @@ def test_properties__default_depth_is__traverse_all_chlidren():
 def test_properties__default_depth_is__2__traverse_depth2():
     from alchemyjsonschema import StructuralWalker
     from alchemyjsonschema.dictify import get_reference
+
     target = _makeOne(StructuralWalker)
     result = target(A0, depth=2)
 
@@ -168,6 +198,7 @@ def test_properties__default_depth_is__2__traverse_depth2():
 def test_properties__default_depth_is__3__traverse_depth3():
     from alchemyjsonschema import StructuralWalker
     from alchemyjsonschema.dictify import get_reference
+
     target = _makeOne(StructuralWalker)
     result = target(A0, depth=3)
 
@@ -181,30 +212,32 @@ def test_properties__default_depth_is__3__traverse_depth3():
 # regression
 # X.y -> Y.z -> Z.y -> Y.z -> Z.y
 
+
 class Y(Base):
     __tablename__ = "y"
     id = sa.Column(sa.Integer, primary_key=True, doc="primary key")
-    z_id = sa.Column(sa.Integer, sa.ForeignKey('z.id'))
+    z_id = sa.Column(sa.Integer, sa.ForeignKey("z.id"))
     zs = orm.relationship("Z", foreign_keys=[z_id])
 
 
 class X(Base):
     __tablename__ = "x"
     id = sa.Column(sa.Integer, primary_key=True, doc="primary key")
-    y_id = sa.Column(sa.Integer, sa.ForeignKey('y.id'))
+    y_id = sa.Column(sa.Integer, sa.ForeignKey("y.id"))
     ys = orm.relationship(Y, foreign_keys=[y_id])
 
 
 class Z(Base):
     __tablename__ = "z"
     id = sa.Column(sa.Integer, primary_key=True, doc="primary key")
-    y_id = sa.Column(sa.Integer, sa.ForeignKey('y.id'))
+    y_id = sa.Column(sa.Integer, sa.ForeignKey("y.id"))
     ys = orm.relationship(Y, foreign_keys=[y_id])
 
 
 def test_properties__infinite_loop():
     from alchemyjsonschema import StructuralWalker, RelationDesicion
     from alchemyjsonschema.dictify import get_reference
+
     target = _makeOne(StructuralWalker, relation_decision=RelationDesicion())
     result = target(X)
     ys = result["properties"]["ys"]
@@ -217,7 +250,10 @@ def test_properties__infinite_loop():
 
 def test_properties__infinite_loop2():
     from alchemyjsonschema import StructuralWalker, UseForeignKeyIfPossibleDecision
-    target = _makeOne(StructuralWalker, relation_decision=UseForeignKeyIfPossibleDecision())
+
+    target = _makeOne(
+        StructuralWalker, relation_decision=UseForeignKeyIfPossibleDecision()
+    )
     result = target(X)
     assert "required" in result
     assert list(sorted(result["properties"])) == ["id", "y_id"]

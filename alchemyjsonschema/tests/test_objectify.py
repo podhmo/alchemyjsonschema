@@ -1,6 +1,7 @@
 # -*- coding:utf-8 -*-
 def _callFUT(*args, **kwargs):
     from alchemyjsonschema.dictify import objectify
+
     return objectify(*args, **kwargs)
 
 
@@ -78,7 +79,9 @@ def test_it_complex__relation_decision():
     created_at = datetime(2000, 1, 1)
     created_at2 = datetime(2001, 1, 1)
     group_dict = dict(name="ravenclaw", color="blue", created_at=created_at2)
-    user_dict = dict(name="foo", created_at=created_at, group=group_dict)  # pk is not found
+    user_dict = dict(
+        name="foo", created_at=created_at, group=group_dict
+    )  # pk is not found
     modellookup = ModelLookup(models)
 
     result = _callFUT(user_dict, user_schema, modellookup, strict=False)
@@ -98,12 +101,18 @@ def test_it_complex__relation_decision():
 
 
 def test_it_complex__fullset_decision():
-    from alchemyjsonschema import SchemaFactory, StructuralWalker, UseForeignKeyIfPossibleDecision
+    from alchemyjsonschema import (
+        SchemaFactory,
+        StructuralWalker,
+        UseForeignKeyIfPossibleDecision,
+    )
     from alchemyjsonschema.dictify import ModelLookup
     import alchemyjsonschema.tests.models as models
     from datetime import datetime
 
-    factory = SchemaFactory(StructuralWalker, relation_decision=UseForeignKeyIfPossibleDecision())
+    factory = SchemaFactory(
+        StructuralWalker, relation_decision=UseForeignKeyIfPossibleDecision()
+    )
     user_schema = factory(models.User)
 
     created_at = datetime(2000, 1, 1)
@@ -132,7 +141,9 @@ def test_it_complex2():
     created_at = datetime(2000, 1, 1)
     created_at2 = datetime(2001, 1, 1)
     user_dict = dict(name="foo", created_at=created_at)  # pk is not found
-    group_dict = dict(name="ravenclaw", color="blue", created_at=created_at2, users=[user_dict])
+    group_dict = dict(
+        name="ravenclaw", color="blue", created_at=created_at2, users=[user_dict]
+    )
     modellookup = ModelLookup(models)
 
     result = _callFUT(group_dict, group_schema, modellookup, strict=False)
@@ -255,14 +266,16 @@ def test_it_nested():
     a_schema = factory(models.A0)
     modellookup = ModelLookup(models)
 
-    params = {"name": "a0",
-              "children": [
-                  {"name": "a00",
-                   "children": [{"name": "a000"},
-                                {"name": "a001"},
-                                {"name": "a002"}]},
-                  {"name": "a10",
-                   "children": [{"name": "a010"}]}]}
+    params = {
+        "name": "a0",
+        "children": [
+            {
+                "name": "a00",
+                "children": [{"name": "a000"}, {"name": "a001"}, {"name": "a002"}],
+            },
+            {"name": "a10", "children": [{"name": "a010"}]},
+        ],
+    }
 
     result = _callFUT(params, a_schema, modellookup, strict=False)
     assert len(result.children) == 2

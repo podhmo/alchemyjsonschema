@@ -53,6 +53,7 @@ def from_multidict(multidict):
 
 class DjangoMultiDictWrapper(object):
     """almost for testing"""
+
     def __init__(self, mdict):
         self.mdict = mdict
 

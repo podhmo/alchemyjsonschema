@@ -8,7 +8,9 @@ class JSONSchemaTransformer:
 
     def transform(self, rawtarget, depth):
         if not inspect.isclass(rawtarget):
-            raise RuntimeError("please passing the path of model class (e.g. foo.boo:Model)")
+            raise RuntimeError(
+                "please passing the path of model class (e.g. foo.boo:Model)"
+            )
         return self.schema_factory(rawtarget, depth=depth)
 
 
@@ -27,7 +29,7 @@ class OpenAPI2Transformer:
         schema = self.schema_factory(model, depth=depth)
         if "definitions" in schema:
             definitions.update(schema.pop("definitions"))
-        definitions[schema['title']] = schema
+        definitions[schema["title"]] = schema
         return {"definitions": definitions}
 
     def transform_by_module(self, module, depth):
@@ -37,7 +39,7 @@ class OpenAPI2Transformer:
             schema = self.schema_factory(basemodel, depth=depth)
             if "definitions" in schema:
                 subdefinitions.update(schema.pop("definitions"))
-            definitions[schema['title']] = schema
+            definitions[schema["title"]] = schema
         d = {}
         d.update(subdefinitions)
         d.update(definitions)
@@ -63,9 +65,13 @@ class OpenAPI3Transformer:
 
 def collect_models(module):
     def is_alchemy_model(maybe_model):
-        return hasattr(maybe_model, "__table__") or hasattr(maybe_model, "__tablename__")
+        return hasattr(maybe_model, "__table__") or hasattr(
+            maybe_model, "__tablename__"
+        )
 
     if hasattr(module, "__all__"):
         return [getattr(module, name) for name in module.__all__]
     else:
-        return [value for name, value in module.__dict__.items() if is_alchemy_model(value)]
+        return [
+            value for name, value in module.__dict__.items() if is_alchemy_model(value)
+        ]

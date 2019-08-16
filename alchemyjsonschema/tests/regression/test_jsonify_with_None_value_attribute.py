@@ -5,11 +5,13 @@ import pytest
 def _callFUT(*args, **kwargs):
     # see: https://github.com/podhmo/alchemyjsonschema/pull/3
     from alchemyjsonschema.dictify import jsonify
+
     return jsonify(*args, **kwargs)
 
 
 def _makeSchema(model):
     from alchemyjsonschema import SchemaFactory, StructuralWalker
+
     factory = SchemaFactory(StructuralWalker)
     return factory(model)
 
@@ -22,7 +24,9 @@ def _makeModel():
 
     class UserKey(Base):
         __tablename__ = "user_key"
-        key = sa.Column(sa.Integer, sa.Sequence('user_id_seq'), primary_key=True, doc="primary key")
+        key = sa.Column(
+            sa.Integer, sa.Sequence("user_id_seq"), primary_key=True, doc="primary key"
+        )
         deactivated_at = sa.Column(sa.DateTime(), nullable=True)
         keytype = sa.Column(sa.String(36), nullable=False)
 
@@ -39,6 +43,7 @@ def test_it():
     assert "deactivated_at" not in d
 
     import jsonschema
+
     jsonschema.validate(d, schema)
 
 

@@ -1,14 +1,13 @@
 # -*- coding:utf-8 -*-
 def _getTarget():
     from alchemyjsonschema import SchemaFactory
+
     return SchemaFactory
 
 
 def _makeOne(*args, **kwargs):
-    from alchemyjsonschema import (
-        ForeignKeyWalker,
-        DefaultClassfier
-    )
+    from alchemyjsonschema import ForeignKeyWalker, DefaultClassfier
+
     return _getTarget()(ForeignKeyWalker, DefaultClassfier)
 
 
@@ -22,6 +21,7 @@ Base = declarative_base()
 
 class Group(Base):
     """model for test"""
+
     __tablename__ = "Group"
 
     pk = sa.Column(sa.Integer, primary_key=True, doc="primary key")
@@ -47,7 +47,11 @@ def test_it_create_schema__and__valid_params__sucess():
 
     target = _makeOne()
     schema = target(Group, excludes=["pk", "users.pk"])
-    data = {"name": "ravenclaw", "color": "blue", "users": [{"name": "foo"}, {"name": "bar"}]}
+    data = {
+        "name": "ravenclaw",
+        "color": "blue",
+        "users": [{"name": "foo"}, {"name": "bar"}],
+    }
 
     validate(data, schema)
 
@@ -59,7 +63,11 @@ def test_it_create_schema__and__invalid_params__failure():
 
     target = _makeOne()
     schema = target(Group, excludes=["pk", "uesrs.pk"])
-    data = {"name": "blackmage", "color": "black", "users": [{"name": "foo"}, {"name": "bar"}]}
+    data = {
+        "name": "blackmage",
+        "color": "black",
+        "users": [{"name": "foo"}, {"name": "bar"}],
+    }
 
     with pytest.raises(ValidationError):
         validate(data, schema)
