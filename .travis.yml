@@ -8,4 +8,4 @@ python:
   - "nightly"
 install:
   - pip install -e .[testing]
-script: python setup.py test
+script: make test
