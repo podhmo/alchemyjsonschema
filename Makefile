@@ -1,4 +1,8 @@
 DST=README.rst
+
+test:
+	py.test -s -v
+
 default:
 	echo alchemyjsonschema > ${DST}
 	echo ================= >> ${DST}
