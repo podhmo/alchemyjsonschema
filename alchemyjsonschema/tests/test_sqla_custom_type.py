@@ -1,14 +1,13 @@
 # -*- coding:utf-8 -*-
 def _getTarget():
     from alchemyjsonschema import SchemaFactory
+
     return SchemaFactory
 
 
 def _makeOne(*args, **kwargs):
-    from alchemyjsonschema import (
-        ForeignKeyWalker,
-        DefaultClassfier
-    )
+    from alchemyjsonschema import ForeignKeyWalker, DefaultClassfier
+
     return _getTarget()(ForeignKeyWalker, DefaultClassfier)
 
 

@@ -4,6 +4,7 @@
 def _callFUT(*args, **kwargs):
     # see: https://github.com/podhmo/alchemyjsonschema/issues/6
     from alchemyjsonschema import SchemaFactory, StructuralWalker
+
     factory = SchemaFactory(StructuralWalker)
     return factory(*args, **kwargs)
 
@@ -19,11 +20,11 @@ def _makeType(impl_):
             super(Choice, self).__init__(**kw)
 
         def process_bind_param(self, value, dialect):
-            return [k for k, v in self.choices.iteritems()
-                    if v == value][0]
+            return [k for k, v in self.choices.iteritems() if v == value][0]
 
         def process_result_value(self, value, dialect):
             return self.choices[value]
+
     return Choice
 
 
@@ -61,4 +62,3 @@ def test_it__impl_is_not_callable():
 
     result = _callFUT(Hascolor)
     assert result["properties"]["color"] == {"type": "string", "maxLength": 1}
-

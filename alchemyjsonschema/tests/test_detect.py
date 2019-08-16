@@ -1,11 +1,13 @@
 # -*- coding:utf-8 -*-
 from sqlalchemy.ext.declarative import declarative_base
 import sqlalchemy as sa
+
 Base = declarative_base()
 
 
 def _getTarget():
     from alchemyjsonschema import SchemaFactory
+
     return SchemaFactory
 
 

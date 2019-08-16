@@ -8,6 +8,7 @@ from sqlalchemy.orm.relationships import RelationshipProperty
 from sqlalchemy.sql.visitors import VisitableType
 from sqlalchemy.orm.base import ONETOMANY, MANYTOONE, MANYTOMANY
 from sqlalchemy.sql.type_api import TypeEngine
+
 logger = logging.getLogger(__name__)
 
 EMPTY_DICT = {}
@@ -15,6 +16,7 @@ EMPTY_DICT = {}
 
 class InvalidStatus(Exception):
     pass
+
 
 """
 http://json-schema.org/latest/json-schema-core.html#anchor8
@@ -88,7 +90,7 @@ default_restriction_dict = {
     t.Enum: enum_one_of,
     t.DateTime: datetime_format,
     t.Date: date_format,
-    t.Time: time_format
+    t.Time: time_format,
 }
 
 
@@ -100,7 +102,9 @@ class Classifier(object):
 
     def __getitem__(self, k):
         cls = k.__class__
-        _, mapped = get_class_mapping(self.mapping, cls, see_mro=self.see_mro, see_impl=self.see_impl)
+        _, mapped = get_class_mapping(
+            self.mapping, cls, see_mro=self.see_mro, see_impl=self.see_impl
+        )
         if mapped is None:
             raise InvalidStatus("notfound: {k}. (cls={cls})".format(k=k, cls=cls))
         return cls, mapped
@@ -141,13 +145,16 @@ class BaseModelWalker(object):
         self.history = history or []
         if includes and excludes:
             if set(includes).intersection(excludes):
-                raise InvalidStatus("Conflict includes={}, exclude={}".format(includes, excludes))
+                raise InvalidStatus(
+                    "Conflict includes={}, exclude={}".format(includes, excludes)
+                )
 
     def clone(self, name, mapper, includes, excludes, history):
         return self.__class__(mapper, includes, excludes, history)
 
     def from_child(self, model):
         return self.__class__(model, history=self.history)
+
 
 # mapper.column_attrs and mapper.attrs is not ordered. define our custom iterate function `iterate'
 
@@ -191,14 +198,20 @@ class StructuralWalker(BaseModelWalker):
                 if self.includes is None or prop.key in self.includes:
                     if self.excludes is None or prop.key not in self.excludes:
                         if prop not in self.history:
-                            if not any(c.foreign_keys for c in getattr(prop, "columns", Empty)):
+                            if not any(
+                                c.foreign_keys for c in getattr(prop, "columns", Empty)
+                            ):
                                 yield prop
 
 
 def get_children(name, params, splitter=".", default=None):  # todo: rename
     prefix = name + splitter
     if hasattr(params, "items"):
-        return {k.split(splitter, 1)[1]: v for k, v in params.items() if k.startswith(prefix)}
+        return {
+            k.split(splitter, 1)[1]: v
+            for k, v in params.items()
+            if k.startswith(prefix)
+        }
     elif isinstance(params, (list, tuple)):
         return [e.split(splitter, 1)[1] for e in params if e.startswith(prefix)]
     else:
@@ -241,19 +254,33 @@ class ChildFactory(object):
 
     def child_walker(self, prop, walker, history=None):
         name = prop.key
-        excludes = get_children(name, walker.includes, splitter=self.splitter, default=[])
+        excludes = get_children(
+            name, walker.includes, splitter=self.splitter, default=[]
+        )
         if not self.bidirectional:
             excludes.extend(self.default_excludes(prop))
         includes = get_children(name, walker.includes, splitter=self.splitter)
 
-        return walker.clone(name, prop.mapper, includes=includes, excludes=excludes, history=history)
+        return walker.clone(
+            name, prop.mapper, includes=includes, excludes=excludes, history=history
+        )
 
-    def child_schema(self, prop, schema_factory, root_schema, walker, overrides, depth, history):
-        subschema = schema_factory._build_properties(walker, root_schema, overrides, depth=(depth and depth - 1), history=history, toplevel=False)
+    def child_schema(
+        self, prop, schema_factory, root_schema, walker, overrides, depth, history
+    ):
+        subschema = schema_factory._build_properties(
+            walker,
+            root_schema,
+            overrides,
+            depth=(depth and depth - 1),
+            history=history,
+            toplevel=False,
+        )
         if prop.direction == ONETOMANY:
             return {"type": "array", "items": subschema}
         else:
             return {"type": "object", "properties": subschema}
+
 
 RELATIONSHIP = "relationship"
 FOREIGNKEY = "foreignkey"
@@ -276,12 +303,16 @@ class UseForeignKeyIfPossibleDecision(object):
             if prop.direction == MANYTOONE:
                 if toplevel:
                     for c in prop.local_columns:
-                        yield FOREIGNKEY, walker.mapper._props[c.name], {"relation": prop.key}
+                        yield FOREIGNKEY, walker.mapper._props[c.name], {
+                            "relation": prop.key
+                        }
                 else:
                     rp = walker.history[0]
                     if prop.local_columns != rp.remote_side:
                         for c in prop.local_columns:
-                            yield FOREIGNKEY, walker.mapper._props[c.name], {"relation": prop.key}
+                            yield FOREIGNKEY, walker.mapper._props[c.name], {
+                                "relation": prop.key
+                            }
             elif prop.direction == MANYTOMANY:
                 # logger.warn("skip mapper=%s, prop=%s is many to many.", walker.mapper, prop)
                 yield {"type": "array", "items": {"type": "string"}}, prop, EMPTY_DICT
@@ -294,12 +325,15 @@ class UseForeignKeyIfPossibleDecision(object):
 
 
 class SchemaFactory(object):
-    def __init__(self, walker,
-                 classifier=DefaultClassfier,
-                 restriction_dict=default_restriction_dict,
-                 container_factory=OrderedDict,
-                 child_factory=ChildFactory("."),
-                 relation_decision=RelationDesicion()):
+    def __init__(
+        self,
+        walker,
+        classifier=DefaultClassfier,
+        restriction_dict=default_restriction_dict,
+        container_factory=OrderedDict,
+        child_factory=ChildFactory("."),
+        relation_decision=RelationDesicion(),
+    ):
         self.container_factory = container_factory
         self.classifier = classifier
         self.walker = walker  # class
@@ -311,11 +345,10 @@ class SchemaFactory(object):
         walker = self.walker(model, includes=includes, excludes=excludes)
         overrides = CollectionForOverrides(overrides or {})
 
-        schema = {
-            "title": model.__name__,
-            "type": "object",
-        }
-        schema["properties"] = self._build_properties(walker, schema, overrides=overrides, depth=depth)
+        schema = {"title": model.__name__, "type": "object"}
+        schema["properties"] = self._build_properties(
+            walker, schema, overrides=overrides, depth=depth
+        )
 
         if overrides.not_used_keys:
             raise InvalidStatus("invalid overrides: {}".format(overrides.not_used_keys))
@@ -331,7 +364,12 @@ class SchemaFactory(object):
 
     def _add_restriction_if_found(self, D, column, itype):
         for restriction_dict in self.restriction_set:
-            _, fn = get_class_mapping(restriction_dict, itype, see_impl=self.classifier.see_impl, see_mro=self.classifier.see_mro)
+            _, fn = get_class_mapping(
+                restriction_dict,
+                itype,
+                see_impl=self.classifier.see_impl,
+                see_mro=self.classifier.see_mro,
+            )
             if fn is not None:
                 if isinstance(fn, (list, tuple)):
                     for f in fn:
@@ -339,7 +377,9 @@ class SchemaFactory(object):
                 else:
                     fn(column, D)
 
-    def _add_property_with_reference(self, walker, root_schema, current_schema, prop, val):
+    def _add_property_with_reference(
+        self, walker, root_schema, current_schema, prop, val
+    ):
         clsname = prop.mapper.class_.__name__
         if "definitions" not in root_schema:
             root_schema["definitions"] = {}
@@ -349,13 +389,18 @@ class SchemaFactory(object):
             val["required"] = self._detect_required(walker.from_child(prop.mapper))
             root_schema["definitions"][clsname] = val
         else:  # array
-            current_schema[prop.key] = {"type": "array", "items": {"$ref": "#/definitions/{}".format(clsname)}}
+            current_schema[prop.key] = {
+                "type": "array",
+                "items": {"$ref": "#/definitions/{}".format(clsname)},
+            }
             val["type"] = "object"
             val["properties"] = val.pop("items")
             val["required"] = self._detect_required(walker.from_child(prop.mapper))
             root_schema["definitions"][clsname] = val
 
-    def _build_properties(self, walker, root_schema, overrides, depth=None, history=None, toplevel=True):
+    def _build_properties(
+        self, walker, root_schema, overrides, depth=None, history=None, toplevel=True
+    ):
         if depth is not None and depth <= 0:
             return self.container_factory()
 
@@ -364,13 +409,27 @@ class SchemaFactory(object):
             history = []
 
         for prop in walker.walk():
-            for action, prop, opts in self.relation_decision.desicion(walker, prop, toplevel):
-                if action == RELATIONSHIP:     # RelationshipProperty
+            for action, prop, opts in self.relation_decision.desicion(
+                walker, prop, toplevel
+            ):
+                if action == RELATIONSHIP:  # RelationshipProperty
                     history.append(prop)
-                    subwalker = self.child_factory.child_walker(prop, walker, history=history)
+                    subwalker = self.child_factory.child_walker(
+                        prop, walker, history=history
+                    )
                     suboverrides = self.child_factory.child_overrides(prop, overrides)
-                    value = self.child_factory.child_schema(prop, self, root_schema, subwalker, suboverrides, depth=depth, history=history)
-                    self._add_property_with_reference(walker, root_schema, D, prop, value)
+                    value = self.child_factory.child_schema(
+                        prop,
+                        self,
+                        root_schema,
+                        subwalker,
+                        suboverrides,
+                        depth=depth,
+                        history=history,
+                    )
+                    self._add_property_with_reference(
+                        walker, root_schema, D, prop, value
+                    )
                     history.pop()
                 elif action == FOREIGNKEY:  # ColumnProperty
                     for c in prop.columns:

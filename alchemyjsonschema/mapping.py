@@ -12,20 +12,11 @@ from .dictify import (
     jsonify_dict,
     normalize_dict,
     prepare_dict,
-    raise_error
+    raise_error,
 )
-from jsonschema import (
-    validate,
-    FormatChecker
-)
-from jsonschema.validators import (
-    Draft3Validator,
-    Draft4Validator
-)
-from . import (
-    default_restriction_dict,
-    default_column_to_schema
-)
+from jsonschema import validate, FormatChecker
+from jsonschema.validators import Draft3Validator, Draft4Validator
+from . import default_restriction_dict, default_column_to_schema
 
 
 class DefaultRegistry:
@@ -37,7 +28,14 @@ class DefaultRegistry:
 
 
 class Mapping(object):
-    def __init__(self, validator, model, modellookup, registry=DefaultRegistry, treat_error=raise_error):
+    def __init__(
+        self,
+        validator,
+        model,
+        modellookup,
+        registry=DefaultRegistry,
+        treat_error=raise_error,
+    ):
         self.validator = validator
         self.format_checker = validator.format_checker
         self.schema = validator.schema
@@ -75,7 +73,14 @@ class MappingFactory(object):
     _Mapping = Mapping
     _ModelLookup = ModelLookup
 
-    def __init__(self, validator_class, schema_factory, module, resolver=None, format_checker=None):
+    def __init__(
+        self,
+        validator_class,
+        schema_factory,
+        module,
+        resolver=None,
+        format_checker=None,
+    ):
         self.schema_factory = schema_factory
         self.validator_class = validator_class
         self.resolver = resolver
@@ -83,11 +88,16 @@ class MappingFactory(object):
         self.module = module
 
     def __call__(self, model, includes=None, excludes=None, depth=None):
-        schema = self.schema_factory(model, includes=includes, excludes=excludes, depth=depth)
-        validator = self.validator_class(schema, resolver=self.resolver, format_checker=self.format_checker)
+        schema = self.schema_factory(
+            model, includes=includes, excludes=excludes, depth=depth
+        )
+        validator = self.validator_class(
+            schema, resolver=self.resolver, format_checker=self.format_checker
+        )
         modellookup = self._ModelLookup(self.module)
         mapping = self._Mapping(validator, model, modellookup)
         return mapping
+
 
 Draft3MappingFactory = partial(MappingFactory, Draft3Validator)
 Draft4MappingFactory = partial(MappingFactory, Draft4Validator)

@@ -1,14 +1,13 @@
 # -*- coding:utf-8 -*-
 def _getTarget():
     from alchemyjsonschema import SchemaFactory
+
     return SchemaFactory
 
 
 def _makeOne(*args, **kwargs):
-    from alchemyjsonschema import (
-        ForeignKeyWalker,
-        DefaultClassfier
-    )
+    from alchemyjsonschema import ForeignKeyWalker, DefaultClassfier
+
     return _getTarget()(ForeignKeyWalker, DefaultClassfier)
 
 
@@ -22,6 +21,7 @@ Base = declarative_base()
 
 class Group(Base):
     """model for test"""
+
     __tablename__ = "Group"
 
     pk = sa.Column(sa.Integer, primary_key=True, doc="primary key")
@@ -70,15 +70,20 @@ def test_description__is__docstring_of_model():
     assert result["description"] == Group.__doc__
 
 
-def test_properties__all__this_is_slackoff_little_bit__all_is_all():   # hmm.
+def test_properties__all__this_is_slackoff_little_bit__all_is_all():  # hmm.
     target = _makeOne()
     result = target(Group)
 
-    assert result["properties"] == {'color': {'maxLength': 6,
-                                              'enum': ['red', 'green', 'yellow', 'blue'],
-                                              'type': 'string'},
-                                    'name': {'maxLength': 255, 'type': 'string'},
-                                    'pk': {'description': 'primary key', 'type': 'integer'}}
+    assert result["properties"] == {
+        "color": {
+            "maxLength": 6,
+            "enum": ["red", "green", "yellow", "blue"],
+            "type": "string",
+        },
+        "name": {"maxLength": 255, "type": "string"},
+        "pk": {"description": "primary key", "type": "integer"},
+    }
+
 
 # adaptive
 
@@ -103,6 +108,7 @@ def test__filtering_by__excludes_and_includes__conflict():
     with pytest.raises(InvalidStatus):
         target(Group, excludes=["pk"], includes=["pk"])
 
+
 # overrides
 
 
@@ -110,15 +116,16 @@ def test__overrides__add():
     target = _makeOne()
     overrides = {"name": {"maxLength": 100}}
     result = target(Group, includes=["name"], overrides=overrides)
-    result["properties"] == {"name": {"maxLength": 100, 'type': 'string'}}
+    result["properties"] == {"name": {"maxLength": 100, "type": "string"}}
 
 
 def test__overrides__pop():
     from alchemyjsonschema import pop_marker
+
     target = _makeOne()
     overrides = {"name": {"maxLength": pop_marker}}
     result = target(Group, includes=["name"], overrides=overrides)
-    result["properties"] == {"name": {'type': 'string'}}
+    result["properties"] == {"name": {"type": "string"}}
 
 
 def test__overrides__wrong_column():
@@ -129,4 +136,3 @@ def test__overrides__wrong_column():
     overrides = {"*missing-field*": {"maxLength": 100}}
     with pytest.raises(InvalidStatus):
         target(Group, includes=["name"], overrides=overrides)
-

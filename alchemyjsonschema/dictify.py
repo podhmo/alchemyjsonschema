@@ -1,5 +1,6 @@
 # -*- coding:utf-8 -*-
 import logging
+
 logger = logging.getLogger(__name__)
 from .compat import text_, long
 from sqlalchemy.inspection import inspect
@@ -8,7 +9,7 @@ from functools import partial
 import isodate
 from .custom.format import (
     parse_time,  # more strict than isodate
-    parse_date   # more strict
+    parse_date,  # more strict
 )
 from collections import OrderedDict
 from jsonschema import validate
@@ -45,41 +46,52 @@ def maybe_wrap(fn, default=None):
         if ob is None:
             return default
         return fn(ob)
+
     return wrapper
 
+
 # todo: look at required or not
-jsonify_dict = {('string', None): maybe_wrap(text_),
-                ('string', 'time',): maybe_wrap(isoformat),
-                ('number', None): maybe_wrap(float),
-                ('integer', None): maybe_wrap(int),
-                ('integer', 'int64'): maybe_wrap(long),  # this isn't precisely enough...
-                ('boolean', None): maybe_wrap(bool),
-                ('string', 'date-time'): maybe_wrap(datetime_rfc3339),
-                ('string', 'date'): maybe_wrap(isoformat0),
-                ('xxx', None): raise_error}
+jsonify_dict = {
+    ("string", None): maybe_wrap(text_),
+    ("string", "time"): maybe_wrap(isoformat),
+    ("number", None): maybe_wrap(float),
+    ("integer", None): maybe_wrap(int),
+    ("integer", "int64"): maybe_wrap(long),  # this isn't precisely enough...
+    ("boolean", None): maybe_wrap(bool),
+    ("string", "date-time"): maybe_wrap(datetime_rfc3339),
+    ("string", "date"): maybe_wrap(isoformat0),
+    ("xxx", None): raise_error,
+}
 
 
-normalize_dict = {('string', None): maybe_wrap(text_),
-                  ('string', 'time',): maybe_wrap(parse_time),
-                  ('number', None): maybe_wrap(float),
-                  ('integer', None): maybe_wrap(int),
-                  ('boolean', None): maybe_wrap(bool),
-                  ('string', 'date-time'): maybe_wrap(isodate.parse_datetime),
-                  ('string', 'date'): maybe_wrap(parse_date),
-                  ('xxx', None): raise_error}
+normalize_dict = {
+    ("string", None): maybe_wrap(text_),
+    ("string", "time"): maybe_wrap(parse_time),
+    ("number", None): maybe_wrap(float),
+    ("integer", None): maybe_wrap(int),
+    ("boolean", None): maybe_wrap(bool),
+    ("string", "date-time"): maybe_wrap(isodate.parse_datetime),
+    ("string", "date"): maybe_wrap(parse_date),
+    ("xxx", None): raise_error,
+}
 
-prepare_dict = {'string': maybe_wrap(text_),
-                'number': maybe_wrap(float),
-                'integer': maybe_wrap(int),
-                'boolean': maybe_wrap(bool)}
+prepare_dict = {
+    "string": maybe_wrap(text_),
+    "number": maybe_wrap(float),
+    "integer": maybe_wrap(int),
+    "boolean": maybe_wrap(bool),
+}
 
 
 def jsonify_of(ob, name, type_, registry=jsonify_dict):
     try:
         convert_fn = registry[type_]
     except KeyError:
-        raise ConvertionError(name, "convert {} failure. unknown format {} of {}".format(name, type_, ob))
+        raise ConvertionError(
+            name, "convert {} failure. unknown format {} of {}".format(name, type_, ob)
+        )
     return convert_fn(getattr(ob, name, None))
+
 
 marker = object()
 
@@ -88,7 +100,9 @@ def normalize_of(ob, name, type_, registry=normalize_dict):
     try:
         convert_fn = registry[type_]
     except KeyError:
-        raise ConvertionError(name, "convert {} failure. unknown format {} of {}".format(name, type_, ob))
+        raise ConvertionError(
+            name, "convert {} failure. unknown format {} of {}".format(name, type_, ob)
+        )
     try:
         val = ob.get(name, marker)
         if val is marker:
@@ -140,11 +154,17 @@ class DictWalker(object):
         type_ = schema.get("type")
         if type_ == "array":
             properties = self.get_properties(schema)
-            return [self.fold_properties(e, properties) for e in self.getter(ob, name, [])]
+            return [
+                self.fold_properties(e, properties) for e in self.getter(ob, name, [])
+            ]
         elif type_ is None:
-            return self.fold_properties(self.getter(ob, name), self.get_properties(schema))
+            return self.fold_properties(
+                self.getter(ob, name), self.get_properties(schema)
+            )
         elif type_ == "object":
-            return self.fold_properties(self.getter(ob, name), self.get_properties(schema))
+            return self.fold_properties(
+                self.getter(ob, name), self.get_properties(schema)
+            )
         else:
             return self.convert(ob, name, (type_, schema.get("format")), self.registry)
 
@@ -253,7 +273,10 @@ class CreateObjectWalker(object):
 
         if type_ == "array":
             sub_schema = self.get_properties(schema)
-            return [self._create_subobject(e, name, sub_schema) for e in params.get(name, [])]
+            return [
+                self._create_subobject(e, name, sub_schema)
+                for e in params.get(name, [])
+            ]
         elif name not in params:
             return None
         elif type_ == "object":
@@ -275,7 +298,9 @@ class CreateObjectWalker(object):
         if self.strict:
             for k in schema.get("required", []):
                 if getattr(sub, k) is None:
-                    raise InvalidStatus("{}.{} is None. this is required.".format(sub_model, k))
+                    raise InvalidStatus(
+                        "{}.{} is None. this is required.".format(sub_model, k)
+                    )
         return sub
 
     def get_properties(self, schema):
@@ -325,7 +350,11 @@ class UpdateObjectWalker(object):
             access = getattr(ob, name)
             for ac, sub, sub_params in list(subobject_iterate(ob, params, name)):
                 if ac == "create":
-                    access.append(self.create_walker._create_subobject(sub_params, name, sub_schema))
+                    access.append(
+                        self.create_walker._create_subobject(
+                            sub_params, name, sub_schema
+                        )
+                    )
                 elif ac == "update":
                     for k, v in sub_params.items():  # xxx:
                         setattr(sub, k, v)

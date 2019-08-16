@@ -57,7 +57,8 @@ class A2(Base):
 
 class MyModel(Base):
     """regression. case: nullable=False column is not found."""
-    __tablename__ = 'models'
+
+    __tablename__ = "models"
     id = sa.Column(sa.Integer, primary_key=True)
     name = sa.Column(sa.Text)
     value = sa.Column(sa.Integer)
