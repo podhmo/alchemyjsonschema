@@ -94,7 +94,3 @@ def is_time(instance):
     if not isinstance(instance, string_types):
         return True
     return validate_time(instance)
-
-
-draft3_format_checker = FormatChecker(_draft_checkers["draft3"])
-draft4_format_checker = FormatChecker(_draft_checkers["draft4"])
