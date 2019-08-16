@@ -8,8 +8,8 @@ from ..compat import string_types
 """
 this is custom format
 """
-time_rx = re.compile("(\d{2}):(\d{2}):(\d{2})(\.\d+)?(Z|([+\-])(\d{2}):(\d{2}))?")
-date_rx = re.compile("(\d{4})\-(\d{2})\-(\d{2})")
+time_rx = re.compile(r"(\d{2}):(\d{2}):(\d{2})(\.\d+)?(Z|([+\-])(\d{2}):(\d{2}))?")
+date_rx = re.compile(r"(\d{4})\-(\d{2})\-(\d{2})")
 
 
 def parse_date(date_string):
