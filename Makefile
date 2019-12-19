@@ -12,3 +12,14 @@ default:
 
 format:
 	black alchemyjsonschema
+
+build:
+#	pip install wheel
+	python setup.py bdist_wheel
+
+upload:
+#	pip install twine
+	twine check dist/alchemyjsonschema-$(shell cat VERSION)*
+	twine upload dist/alchemyjsonschema-$(shell cat VERSION)*
+
+.PHONY: build upload
