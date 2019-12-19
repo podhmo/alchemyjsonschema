@@ -24,6 +24,6 @@ def main():
     parser.add_argument("--driver", default="alchemyjsonschema.command.driver:Driver")
     args = parser.parse_args()
 
-    driver_cls = import_symbol(args.driver)
+    driver_cls = import_symbol(args.driver, cwd=True)
     driver = driver_cls(args.walker, args.decision, args.layout)
     driver.run(args.target, args.out, format=args.format)
