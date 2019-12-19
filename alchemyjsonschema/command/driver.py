@@ -65,6 +65,6 @@ class Driver:
 
     def load(self, module_path):
         if ":" in module_path:
-            return magicalimport.import_symbol(module_path)
+            return magicalimport.import_symbol(module_path, cwd=True)
         else:
-            return magicalimport.import_module(module_path)
+            return magicalimport.import_module(module_path, cwd=True)

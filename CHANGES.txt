@@ -1,3 +1,7 @@
+0.6.1
+
+- catch up magicalimport 0.8.1
+
 0.6.0
 
 - fix for jsonschema-update

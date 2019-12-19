@@ -31,7 +31,7 @@ testing_extras = tests_require + []
 
 setup(
     name="alchemyjsonschema",
-    version="0.6.0",
+    version=open("VERSION").read().strip(),
     description="mapping jsonschema for sqlalchemy models",
     long_description=README + "\n\n" + CHANGES,
     classifiers=[
