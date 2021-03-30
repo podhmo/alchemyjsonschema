@@ -58,7 +58,7 @@ def test_it(db):
             }
         },
         "type": "object",
-        "required": ["artistid"],
+        "required": ["artistid", "artistname"],
     }
     assert schema == expected
 
@@ -83,7 +83,7 @@ def test_it2(db):
                         ("artistname", {"type": "string"}),
                     ]
                 ),
-                "required": ["artistid"],
+                "required": ["artistid", "artistname"],
                 "type": "object",
             }
         },
