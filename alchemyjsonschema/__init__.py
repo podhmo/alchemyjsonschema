@@ -460,6 +460,9 @@ class SchemaFactory(object):
         r = []
         for prop in walker.walk():
             columns = getattr(prop, "columns", Empty)
-            if any(not c.nullable and c.default is None for c in columns):
+            if any(
+                not c.nullable and (c.default is None and c.server_default is None)
+                for c in columns
+            ):
                 r.append(prop.key)
         return r
