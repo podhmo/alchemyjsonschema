@@ -15,7 +15,7 @@ format:
 
 build:
 #	pip install wheel
-	python setup.py bdist_wheel
+	python setup.py sdist bdist_wheel
 
 ci:
 	$(MAKE) lint test
