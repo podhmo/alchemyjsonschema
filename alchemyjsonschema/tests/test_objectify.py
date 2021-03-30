@@ -125,7 +125,7 @@ def test_it_complex__fullset_decision():
     assert result.pk is None
     assert result.name == "foo"
     assert result.created_at == datetime(2000, 1, 1)
-    assert result.group_id is 1
+    assert result.group_id == 1
     assert modellookup.name_stack == []
 
 
