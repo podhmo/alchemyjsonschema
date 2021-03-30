@@ -62,6 +62,9 @@ default_column_to_schema = {
 }
 
 
+if getattr(t, "Binary", None) is not None:
+    default_column_to_schema[t.Binary] = "xxx"
+
 # restriction
 def string_max_length(column, sub):
     if column.type.length is not None:
