@@ -2,7 +2,6 @@
 import logging
 
 logger = logging.getLogger(__name__)
-from .compat import text_, long
 from sqlalchemy.inspection import inspect
 from sqlalchemy.orm.relationships import RelationshipProperty
 from functools import partial
@@ -52,11 +51,11 @@ def maybe_wrap(fn, default=None):
 
 # todo: look at required or not
 jsonify_dict = {
-    ("string", None): maybe_wrap(text_),
+    ("string", None): maybe_wrap(str),
     ("string", "time"): maybe_wrap(isoformat),
     ("number", None): maybe_wrap(float),
     ("integer", None): maybe_wrap(int),
-    ("integer", "int64"): maybe_wrap(long),  # this isn't precisely enough...
+    ("integer", "int64"): maybe_wrap(int),  # this isn't precisely enough...
     ("boolean", None): maybe_wrap(bool),
     ("string", "date-time"): maybe_wrap(datetime_rfc3339),
     ("string", "date"): maybe_wrap(isoformat0),
@@ -65,7 +64,7 @@ jsonify_dict = {
 
 
 normalize_dict = {
-    ("string", None): maybe_wrap(text_),
+    ("string", None): maybe_wrap(str),
     ("string", "time"): maybe_wrap(parse_time),
     ("number", None): maybe_wrap(float),
     ("integer", None): maybe_wrap(int),
@@ -76,7 +75,7 @@ normalize_dict = {
 }
 
 prepare_dict = {
-    "string": maybe_wrap(text_),
+    "string": maybe_wrap(str),
     "number": maybe_wrap(float),
     "integer": maybe_wrap(int),
     "boolean": maybe_wrap(bool),
