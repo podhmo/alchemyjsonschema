@@ -56,3 +56,17 @@ def test_detect__nullable_is_False__but_default_is_exists__not_required():
     walker = target.walker(Model2)
     result = target._detect_required(walker)
     assert result == ["pk"]
+
+
+def test_detect__nullable_is_False__but_server_default_is_exists__not_required():
+    from alchemyjsonschema import ForeignKeyWalker
+
+    class Model3(Base):
+        __tablename__ = "Model3"
+        pk = sa.Column(sa.Integer, primary_key=True, doc="primary key")
+        created_at = sa.Column(sa.DateTime, nullable=False, server_default="NOW()")
+
+    target = _makeOne(ForeignKeyWalker)
+    walker = target.walker(Model3)
+    result = target._detect_required(walker)
+    assert result == ["pk"]
