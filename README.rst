@@ -1,8 +1,8 @@
 alchemyjsonschema
 =================
 
-.. image:: https://travis-ci.org/podhmo/alchemyjsonschema.svg
-  :target: https://travis-ci.org/podhmo/alchemyjsonschema.svg
+.. |Python package| image:: https://github.com/podhmo/alchemyjsonschema/actions/workflows/python-package.yml/badge.svg
+    :target: https://github.com/podhmo/alchemyjsonschema/actions/workflows/python-package.yml
 
 features
 ----------------------------------------
