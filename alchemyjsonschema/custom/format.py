@@ -3,7 +3,7 @@ import re
 from jsonschema._format import _checks_drafts, FormatChecker, _draft_checkers
 import calendar
 from datetime import date, time
-from ..compat import string_types
+
 
 """
 this is custom format
@@ -84,13 +84,13 @@ def validate_time(time_string):
 
 @_checks_drafts("date", raises=ValueError)
 def is_date(instance):
-    if not isinstance(instance, string_types):
+    if not isinstance(instance, str):
         return True
     return validate_date(instance)
 
 
 @_checks_drafts("time", raises=ValueError)
 def is_time(instance):
-    if not isinstance(instance, string_types):
+    if not isinstance(instance, str):
         return True
     return validate_time(instance)
