@@ -65,6 +65,7 @@ default_column_to_schema = {
 if getattr(t, "Binary", None) is not None:
     default_column_to_schema[t.Binary] = "xxx"
 
+
 # restriction
 def string_max_length(column, sub):
     if column.type.length is not None:
@@ -343,7 +344,16 @@ class SchemaFactory(object):
         self.child_factory = child_factory
         self.relation_decision = relation_decision
 
-    def __call__(self, model, includes=None, excludes=None, overrides=None, depth=None):
+    def __call__(
+        self,
+        model,
+        *,
+        includes=None,
+        excludes=None,
+        overrides=None,
+        depth=None,
+        adjust_required=None
+    ):
         walker = self.walker(model, includes=includes, excludes=excludes)
         overrides = CollectionForOverrides(overrides or {})
 
@@ -358,7 +368,7 @@ class SchemaFactory(object):
         if model.__doc__:
             schema["description"] = model.__doc__
 
-        required = self._detect_required(walker)
+        required = self._detect_required(walker, adjust_required=adjust_required)
 
         if required:
             schema["required"] = required
@@ -456,13 +466,16 @@ class SchemaFactory(object):
                     D[prop.key] = action
         return D
 
-    def _detect_required(self, walker):
+    def _detect_required(self, walker, *, adjust_required=None):
         r = []
         for prop in walker.walk():
             columns = getattr(prop, "columns", Empty)
-            if any(
+            required = any(
                 not c.nullable and (c.default is None and c.server_default is None)
                 for c in columns
-            ):
+            )
+            if adjust_required is not None:
+                required = adjust_required(prop, required)
+            if required:
                 r.append(prop.key)
         return r

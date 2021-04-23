@@ -70,3 +70,25 @@ def test_detect__nullable_is_False__but_server_default_is_exists__not_required()
     walker = target.walker(Model3)
     result = target._detect_required(walker)
     assert result == ["pk"]
+
+
+def test_detect__adjust_required():
+    from alchemyjsonschema import ForeignKeyWalker
+
+    class Model4(Base):
+        __tablename__ = "Model4"
+        pk = sa.Column(sa.Integer, primary_key=True, doc="primary key")
+
+    target = _makeOne(ForeignKeyWalker)
+    walker = target.walker(Model4)
+
+    # default required
+    result = target._detect_required(walker)
+    assert result == ["pk"]
+
+    # use adjust_required
+    result = target._detect_required(
+        walker,
+        adjust_required=lambda prop, default: False if prop.key == "pk" else default,
+    )
+    assert result == []
