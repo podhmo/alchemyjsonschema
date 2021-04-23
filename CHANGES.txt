@@ -1,3 +1,7 @@
+0.7.1
+
+- adjust_required() option
+
 0.7.0
 
 - see server_default
