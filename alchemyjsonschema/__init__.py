@@ -65,6 +65,7 @@ default_column_to_schema = {
 if getattr(t, "Binary", None) is not None:
     default_column_to_schema[t.Binary] = "xxx"
 
+
 # restriction
 def string_max_length(column, sub):
     if column.type.length is not None:
@@ -343,7 +344,16 @@ class SchemaFactory(object):
         self.child_factory = child_factory
         self.relation_decision = relation_decision
 
-    def __call__(self, model, *, includes=None, excludes=None, overrides=None, depth=None, adjust_require=None):
+    def __call__(
+        self,
+        model,
+        *,
+        includes=None,
+        excludes=None,
+        overrides=None,
+        depth=None,
+        adjust_required=None
+    ):
         walker = self.walker(model, includes=includes, excludes=excludes)
         overrides = CollectionForOverrides(overrides or {})
 
