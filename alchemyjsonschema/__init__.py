@@ -2,6 +2,7 @@
 import logging
 from collections import OrderedDict
 import sqlalchemy.types as t
+import sqlalchemy.dialects.postgresql as pgt
 from sqlalchemy.inspection import inspect
 from sqlalchemy.orm.properties import ColumnProperty
 from sqlalchemy.orm.relationships import RelationshipProperty
@@ -42,6 +43,9 @@ JSON Schema defines seven primitive types for JSON values:
 
 #  tentative
 default_column_to_schema = {
+    pgt.JSONB: "object",
+    pgt.UUID: "string",
+    t.JSON: "object",
     t.String: "string",
     t.Text: "string",
     t.Integer: "integer",
