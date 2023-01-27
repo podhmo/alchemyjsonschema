@@ -447,7 +447,7 @@ class SchemaFactory(object):
                     self._add_property_with_reference(
                         walker, root_schema, D, prop, value
                     )
-                    # history.pop()
+                    history.pop()
                 elif action == FOREIGNKEY:  # ColumnProperty
                     for c in prop.columns:
                         sub = {}
