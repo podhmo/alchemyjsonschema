@@ -45,6 +45,7 @@ JSON Schema defines seven primitive types for JSON values:
 default_column_to_schema = {
     pgt.JSONB: "object",
     pgt.UUID: "string",
+    t.ARRAY: "array",
     t.JSON: "object",
     t.String: "string",
     t.Text: "string",
