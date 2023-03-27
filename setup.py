@@ -16,7 +16,7 @@ install_requires = [
     "sqlalchemy",
     "jsonschema",
     "strict-rfc3339",
-    "isodate",  # hmm.
+    "isodate",
     "pytz",
     "magicalimport",
     "dictknife>=0.7.2",
@@ -30,18 +30,18 @@ testing_extras = tests_require + []
 
 
 setup(
-    name="alchemyjsonschema",
+    name="mstax-alchemyjsonschema",
     version=open("VERSION").read().strip(),
-    description="mapping jsonschema for sqlalchemy models",
+    description="A package for generating json-schema models from sqlalchemy models.",
     long_description=README + "\n\n" + CHANGES,
     classifiers=[
         "Programming Language :: Python",
         "Programming Language :: Python :: Implementation :: CPython",
     ],
     keywords="alchemyjsonschema sqlalchemy jsonschema schema-generation",
-    author="podhmo",
+    author="splautz",
     author_email="",
-    url="https://github.com/podhmo/alchemyjsonschema",
+    url="https://github.com/splautz/alchemyjsonschema.git",
     packages=find_packages(exclude=["alchemyjsonschema.tests"]),
     include_package_data=True,
     zip_safe=False,

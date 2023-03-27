@@ -1,3 +1,7 @@
+1.0.0
+
+- added types for JSON fields
+
 0.7.1
 
 - adjust_required() option
