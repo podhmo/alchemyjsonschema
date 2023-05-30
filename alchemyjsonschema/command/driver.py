@@ -60,7 +60,6 @@ class Driver:
         self.dump(result, filename, format=format)
 
     def dump(self, data, filename, format):
-        loading.setup(loading.json.load, loading.json.dump)
         loading.dumpfile(data, filename, format=format, sort_keys=True)
 
     def load(self, module_path):

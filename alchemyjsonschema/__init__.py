@@ -1,6 +1,5 @@
 # -*- coding:utf-8 -*-
 import logging
-from collections import OrderedDict
 import sqlalchemy.types as t
 from sqlalchemy.inspection import inspect
 from sqlalchemy.orm.properties import ColumnProperty
@@ -333,7 +332,7 @@ class SchemaFactory(object):
         walker,
         classifier=DefaultClassfier,
         restriction_dict=default_restriction_dict,
-        container_factory=OrderedDict,
+        container_factory=dict,
         child_factory=ChildFactory("."),
         relation_decision=RelationDesicion(),
     ):
