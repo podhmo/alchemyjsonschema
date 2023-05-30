@@ -1,4 +1,4 @@
-default: swagger2 jsonschema
+default: swagger2 jsonschema openapi3
 
 swagger2:
 	alchemyjsonschema models.py:Group --out dst/default.json
