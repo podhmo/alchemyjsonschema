@@ -13,7 +13,7 @@ except IOError:
     README = CHANGES = ""
 
 install_requires = [
-    "sqlalchemy<2",
+    "sqlalchemy",
     "jsonschema",
     "strict-rfc3339",
     "isodate",  # hmm.
