@@ -5,7 +5,7 @@ import sqlalchemy.types as t
 from sqlalchemy.inspection import inspect
 from sqlalchemy.orm.properties import ColumnProperty
 from sqlalchemy.orm.relationships import RelationshipProperty
-from sqlalchemy.sql.visitors import VisitableType
+from sqlalchemy.sql.visitors import Visitable
 from sqlalchemy.orm.base import ONETOMANY, MANYTOONE, MANYTOMANY
 from sqlalchemy.sql.type_api import TypeEngine
 
@@ -446,7 +446,7 @@ class SchemaFactory(object):
                 elif action == FOREIGNKEY:  # ColumnProperty
                     for c in prop.columns:
                         sub = {}
-                        if type(c.type) != VisitableType:
+                        if type(c.type) != Visitable:
                             itype, sub["type"] = self.classifier[c.type]
 
                             self._add_restriction_if_found(sub, c, itype)
