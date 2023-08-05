@@ -10,7 +10,6 @@ from .custom.format import (
     parse_time,  # more strict than isodate
     parse_date,  # more strict
 )
-from collections import OrderedDict
 from jsonschema import validate
 from . import InvalidStatus
 import pytz
@@ -388,7 +387,7 @@ class UpdateObjectWalker(object):
 
 
 def subobject_iterate(ob, params, name):
-    cache = OrderedDict()
+    cache = dict()
     used_children = set()
 
     primary_keys = None

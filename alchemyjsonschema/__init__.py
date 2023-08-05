@@ -1,12 +1,11 @@
 # -*- coding:utf-8 -*-
 import logging
-from collections import OrderedDict
 import sqlalchemy.types as t
 import sqlalchemy.dialects.postgresql as pgt
 from sqlalchemy.inspection import inspect
 from sqlalchemy.orm.properties import ColumnProperty
 from sqlalchemy.orm.relationships import RelationshipProperty
-from sqlalchemy.sql.visitors import VisitableType
+from sqlalchemy.sql.visitors import Visitable
 from sqlalchemy.orm.base import ONETOMANY, MANYTOONE, MANYTOMANY
 from sqlalchemy.sql.type_api import TypeEngine
 
@@ -338,7 +337,7 @@ class SchemaFactory(object):
         walker,
         classifier=DefaultClassfier,
         restriction_dict=default_restriction_dict,
-        container_factory=OrderedDict,
+        container_factory=dict,
         child_factory=ChildFactory("."),
         relation_decision=RelationDesicion(),
     ):
@@ -451,7 +450,7 @@ class SchemaFactory(object):
                 elif action == FOREIGNKEY:  # ColumnProperty
                     for c in prop.columns:
                         sub = {}
-                        if type(c.type) != VisitableType:
+                        if type(c.type) != Visitable:
                             itype, sub["type"] = self.classifier[c.type]
 
                             self._add_restriction_if_found(sub, c, itype)
