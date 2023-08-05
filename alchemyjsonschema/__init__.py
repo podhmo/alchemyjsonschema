@@ -51,7 +51,7 @@ default_column_to_schema = {
     t.Integer: "integer",
     t.SmallInteger: "integer",
     t.BigInteger: "string",  # xxx
-    t.Numeric: "integer",
+    t.Numeric: "number",
     t.Float: "number",
     t.DateTime: "string",
     t.Date: "string",
