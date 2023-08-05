@@ -8,7 +8,7 @@ try:
     with open(os.path.join(here, "README.rst")) as f:
         README = f.read()
 except IOError:
-    README = CHANGES = ""
+    README = ""
 
 install_requires = [
     "sqlalchemy",
@@ -31,7 +31,7 @@ setup(
     name="alchemyjsonschema",
     version=open("VERSION").read().strip(),
     description="A package for generating json-schema models from sqlalchemy models.",
-    long_description=README + "\n\n" + CHANGES,
+    long_description=README,
     classifiers=[
         "Programming Language :: Python",
         "Programming Language :: Python :: Implementation :: CPython",
