@@ -13,7 +13,6 @@ except IOError:
 install_requires = [
     "sqlalchemy",
     "jsonschema",
-    "strict-rfc3339",
     "isodate",  # hmm.
     "pytz",
     "magicalimport",
