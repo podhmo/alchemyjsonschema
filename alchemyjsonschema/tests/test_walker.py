@@ -1,4 +1,9 @@
 # -*- coding:utf-8 -*-
+import sqlalchemy as sa
+import sqlalchemy.orm as orm
+from sqlalchemy.ext.declarative import declarative_base
+
+
 def _getTarget():
     from alchemyjsonschema import SchemaFactory
 
@@ -10,11 +15,6 @@ def _makeOne(*args, **kwargs):
 
     return _getTarget()(ForeignKeyWalker, DefaultClassfier)
 
-
-# definition
-import sqlalchemy as sa
-import sqlalchemy.orm as orm
-from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
 
@@ -136,3 +136,18 @@ def test__overrides__wrong_column():
     overrides = {"*missing-field*": {"maxLength": 100}}
     with pytest.raises(InvalidStatus):
         target(Group, includes=["name"], overrides=overrides)
+
+
+# with column_name
+def test_walk_with__column_name():
+    class TestTable(Base):
+        __tablename__ = "TestTable"
+
+        pk = sa.Column(
+            sa.Integer, primary_key=True, doc="primary key", name="unique_column_name"
+        )
+        name = sa.Column(sa.String(255), default="", nullable=False)
+
+    target = _makeOne()
+    result = target(TestTable)
+    assert list(result["properties"].keys()) == ["pk", "name"]
