@@ -168,8 +168,8 @@ class BaseModelWalker(object):
 
 class ForeignKeyWalker(BaseModelWalker):
     def iterate(self):
-        for c in self.mapper.local_table.columns:
-            yield self.mapper._props[c.name]  # danger!! not immutable
+        for mapped_key_name in self.mapper.columns.keys():
+            yield self.mapper._props[mapped_key_name]  # danger!! not immutable
 
     def walk(self):
         for prop in self.iterate():
@@ -180,8 +180,8 @@ class ForeignKeyWalker(BaseModelWalker):
 
 class NoForeignKeyWalker(BaseModelWalker):
     def iterate(self):
-        for c in self.mapper.local_table.columns:
-            yield self.mapper._props[c.name]  # danger!! not immutable
+        for mapped_key_name in self.mapper.columns.keys():
+            yield self.mapper._props[mapped_key_name]  # danger!! not immutable
 
     def walk(self):
         for prop in self.iterate():
@@ -194,8 +194,8 @@ class NoForeignKeyWalker(BaseModelWalker):
 class StructuralWalker(BaseModelWalker):
     def iterate(self):
         # self.mapper.attrs
-        for c in self.mapper.local_table.columns:
-            yield self.mapper._props[c.name]  # danger!! not immutable
+        for mapped_key_name in self.mapper.columns.keys():
+            yield self.mapper._props[mapped_key_name]  # danger!! not immutable
         for prop in self.mapper.relationships:
             yield prop
 
@@ -448,8 +448,8 @@ class SchemaFactory(object):
                     )
                     history.pop()
                 elif action == FOREIGNKEY:  # ColumnProperty
+                    sub = {}
                     for c in prop.columns:
-                        sub = {}
                         if type(c.type) != Visitable:
                             itype, sub["type"] = self.classifier[c.type]
 
@@ -458,11 +458,10 @@ class SchemaFactory(object):
                             if c.doc:
                                 sub["description"] = c.doc
 
-                            if c.name in overrides:
+                            if c.key in overrides:
                                 overrides.overrides(sub)
                             if opts:
                                 sub.update(opts)
-                            D[c.name] = sub
                         else:
                             raise NotImplemented
                     D[prop.key] = sub
